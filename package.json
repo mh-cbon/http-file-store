@@ -1,5 +1,5 @@
 {
-  "name": "http-file-store",
+  "name": "@mh-cbon/http-file-store",
   "version": "1.0.0",
   "description": "Server and api to read / write files over HTTP",
   "main": "index.js",
