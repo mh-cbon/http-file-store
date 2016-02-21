@@ -6,7 +6,7 @@ Usage
 
 Options
 
-  --config  | -v   Path to the JSON configuration file
+  --config  | -c   Path to the JSON configuration file
   --verbose | -v   Enable verbosity pass in the module list to debug.
 
 Config
@@ -30,8 +30,6 @@ Config
       "host": "a host value to listen for http requests",
     }
   }
-
-Examples
 
 */}
 var pkg   = require('./package.json')
@@ -69,7 +67,6 @@ try{
 && help.print(usage, pkg)
 && help.die(
   "Configuration options are wrong : url_base is missing"
-);
 );
 
 (!config.upload_path)
@@ -121,7 +118,9 @@ var upload = multer({ dest: config.upload_path });
 var app = express();
 
 app.get(config.base_url, fileStore.read(config.base));
-app.post(config.base_url, fileStore.write(config.base, config.allowOverwrite));
+app.post(config.base_url,
+  upload.single('file'),
+  fileStore.write(config.base, config.allowOverwrite));
 
 if ( config.ssl && config.ssl.key && config.ssl.cert ) {
   var SSL = https.createServer( {

@@ -1,7 +1,7 @@
 {
   "name": "http-file-store",
   "version": "1.0.0",
-  "description": "HTTP server to store files",
+  "description": "Server and api to read / write files over HTTP",
   "main": "index.js",
   "bin": {
     "http-file-store": "./bin.js"
