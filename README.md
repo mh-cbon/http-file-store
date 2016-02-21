@@ -90,6 +90,27 @@ Given a route mounted on `/read`, and a file `some.txt`
    .end(done)
  ```
 
+ When the target path provided within the url path is a `file`, the content
+ is streamed to the client.
+
+ When the target path provided within the url path is a `directory`,
+  the listing of the directory is provided as a JSON object such:
+
+  ```js
+  [
+    {
+      name: f,
+      type: stats.isFile() ? 'file' : 'dir',
+      size: stats.size,
+      mime: mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
+      atime: stats.atime,
+      mtime: stats.mtime,
+      ctime: stats.ctime,
+      birthtime: stats.birthtime
+    }
+  ]
+  ```
+
 ### Write
 
 Given a route mounted on `/write`, and file `other.txt` to write
@@ -100,6 +121,24 @@ request(app)
   .post('/write/')
   .attach('file', path.join('other.txt'))
   .expect(200)
+```
+
+On successful write, the route handler will return the new listing of the
+directory, much like a read access:
+
+```js
+[
+  {
+    name: f,
+    type: stats.isFile() ? 'file' : 'dir',
+    size: stats.size,
+    mime: mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
+    atime: stats.atime,
+    mtime: stats.mtime,
+    ctime: stats.ctime,
+    birthtime: stats.birthtime
+  }
+]
 ```
 
 
