@@ -136,4 +136,4 @@ if ( config.ssl && config.ssl.key && config.ssl.cert ) {
 
 var CLEAR = http.createServer( app );
 
-CLEAR.listen(config.lear.port, config.clear.host);
+CLEAR.listen(config.clear.port, config.clear.host);
