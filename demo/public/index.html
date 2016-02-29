@@ -1,0 +1,57 @@
+<html>
+<head>
+</head>
+<body>
+  <h1>Upload with a form</h1>
+  <div>
+    <form enctype="multipart/form-data" method="POST"
+      name="simple">
+      <input type="text" placeholder="directory" value="/" name="directory" />
+      <input type="file" name="file" />
+      <input type="submit" value="Upload" />
+    </form>
+    <script>
+      var form = document.getElementsByName("simple")[0];
+      var directory = form.querySelector("input[name='directory']");
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var path = directory.value || '/'
+        form.action = 'http://127.0.0.1:8081/my_store' + path;
+        form.submit()
+      })
+    </script>
+  </div>
+  <h1>Upload with ajax</h1>
+  <div>
+    <form enctype="multipart/form-data" name="ajax">
+      <input type="text" placeholder="directory" value="/" name="directory" />
+      <input type="file" name="file" />
+      <input type="submit" value="Upload" />
+    </form>
+    <script>
+      var ajax = document.getElementsByName("ajax")[0];
+      var directory = ajax.querySelector("input[name='directory']");
+      ajax.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var path = directory.value || '/'
+        var action = 'http://127.0.0.1:8081/my_store' + path;
+
+        var xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress',function(ev){
+            console.log((ev.loaded/ev.total)+'%');
+        }, false);
+        xhr.onreadystatechange = function(ev){
+            // Blah blah blah, you know how to make AJAX requests
+        };
+        xhr.open('POST', action, true);
+        var file = ajax.querySelector("input[name='file']").files[0];
+        var data = new FormData();
+        data.append('file', file);
+        xhr.send(data);
+      })
+
+
+    </script>
+  </div>
+</body>
+</html>
