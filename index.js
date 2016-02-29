@@ -1,22 +1,29 @@
 
-var fs    = require('node-fs');
-var path  = require('path');
-var async = require('async');
-var mime  = require('mime');
-var send  = require('send');
+var pkg     = require('./package.json')
+var fs      = require('node-fs');
+var path    = require('path');
+var async   = require('async');
+var mime    = require('mime');
+var send    = require('send');
+var debug   = require('debug')(pkg.name);
 
-function fsRead (base) {
+function fsRead (config) {
+  var url_base  = config.url_base || '/';
+  var base      = config.base;
   return function (req, res, next) {
-    var filePath = path.join(base, req.path);
+    var filePath = path.join(base, req.path.substr(url_base.length));
+
+    debug('filepath=%s', filePath);
 
     if(filePath.match(/[.]{1,2}\//)) return res.status(500).end();
 
     fs.lstat(filePath, function (err, stats) {
-      if (err) return res.status(500).end();
+      debug('err=%j, stats=%j', err, stats);
+      if (err) return res.status(500).send(err);
 
       if (stats.isDirectory()) {
         readDirectory(filePath, function (err, jsonRes) {
-          if (err) res.status(500).json(err);
+          if (err) res.status(500).send(err);
           res.status(200).json(jsonRes);
         })
       }
@@ -30,24 +37,31 @@ function fsRead (base) {
   }
 }
 
-function fsWrite (base, allowOverwrite) {
+function fsWrite (config) {
+  var url_base        = config.url_base || '/';
+  var base            = config.base;
+  var allowOverwrite  = config.allowOverwrite;
   return function (req, res, next) {
 
     var overwrite = allowOverwrite && !!req.query.overwrite;
 
+    debug('req.file=%j', req.file);
     if (!req.file) return res.status(500).end();
 
     var fileInfo  = req.file;
     var filename  = fileInfo.originalname;
-    var directory = path.join(base, req.path);
+    var directory = path.join(base, req.path.substr(url_base.length));
 
+    debug('directory=%s', directory);
     if(directory.match(/[.]{1,2}\//))
       return removeTempFiles(req.file) && res.status(500).end();
 
+    debug('filename=%s', filename);
     if(filename.match(/[.]{1,2}\//))
       return removeTempFiles(req.file) && res.status(500).end();
 
     var filePath = path.join( directory, filename );
+    debug('filePath=%s', filePath);
 
     async.series( [
         // check if the file exists and if we can overwrite it if it does
@@ -63,6 +77,7 @@ function fsWrite (base, allowOverwrite) {
         setNormalPermissions.bind( null, filePath )
 
     ], function( err ) {
+      debug('err=%j', err);
       removeTempFile(fileInfo.path);
       if ( err ) return res.status(500).json(err);
       readDirectory(directory, function (err, jsonRes) {
@@ -101,7 +116,12 @@ function createDirectory( directory, then ) {
 }
 
 function moveToDestination( source, dest, then ) {
-  fs.rename( source, dest, function( error ) {
+  var error;
+  fs.createReadStream(source)
+  .pipe(fs.createWriteStream(dest))
+  .on('error', function (e) {
+    error = e;
+  }).on('close', function () {
     var err;
     if ( error )
       err = {
@@ -110,7 +130,7 @@ function moveToDestination( source, dest, then ) {
         code: 500
       };
     then(err);
-  });
+  })
 }
 
 function setNormalPermissions( filename, then ) {

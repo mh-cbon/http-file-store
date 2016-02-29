@@ -20,9 +20,11 @@ var read      = fileStore.read('test/fixtures/');
 var upload  = multer({ dest: path.join(fixturePath, 'uploads') });
 var app     = express();
 
-app.use('/read', fileStore.read(fixturePath));
-app.use('/write', upload.single('file'), fileStore.write(fixturePath, true));
-app.use('/no_overwrite', upload.single('file'), fileStore.write(fixturePath, false));
+app.use('/read', fileStore.read({base: fixturePath}));
+app.use('/write', upload.single('file'), 
+  fileStore.write({base: fixturePath, allowOverwrite: true}));
+app.use('/no_overwrite', upload.single('file'),
+  fileStore.write({base: fixturePath, allowOverwrite: false}));
 
 // Callback test
 test('read file on root', function(done) {

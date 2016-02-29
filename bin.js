@@ -25,11 +25,19 @@ Config
       "host": "a host value to listen for https requests",
       "key": "a path to an SSL key",
       "ca": "a path to the SSL CA file",
-      "cert": "a path to the SSL cert file",
+      "cert": "a path to the SSL cert file"
     },
     "clear": {
       "port": "a number, or null for a random port",
-      "host": "a host value to listen for http requests",
+      "host": "a host value to listen for http requests"
+    },
+    "cors": {
+      "origin": "*",
+      "credentials": "true|false",
+      "methods": ["GET", "PUT", "POST"],
+      "allowedHeaders": ["Content-Type", "Authorization"],
+      "exposedHeaders": ["Content-Range", "X-Content-Range"],
+      "maxAge": 600
     }
   }
 
@@ -39,6 +47,8 @@ var argv  = require('minimist')(process.argv.slice(2));
 var help  = require('@maboiteaspam/show-help')(usage, argv.h||argv.help, pkg)
 var debug = require('@maboiteaspam/set-verbosity')(pkg.name, argv.v || argv.verbose);
 var fs    = require('fs')
+var path  = require('path')
+var cors  = require('cors');
 
 const configPath  = argv.config || argv.c || false;
 
@@ -48,7 +58,7 @@ const configPath  = argv.config || argv.c || false;
 
 var config = {}
 try{
-  config = require(configPath)
+  config = require(path.join(process.cwd(), configPath))
 }catch(ex){
   help.die(
     "Config path must exist and be a valid JSON file.\n" + ex
@@ -119,10 +129,16 @@ var fileStore   = require('./index.js');
 var upload = multer({ dest: config.upload_path });
 var app = express();
 
-app.get(config.base_url, fileStore.read(config.base));
-app.post(config.base_url,
-  upload.single('file'),
-  fileStore.write(config.base, config.allowOverwrite));
+config.base = path.resolve(config.base)
+
+console.log("http-file-store url %s", config.url_base);
+console.log("http-file-store path %s", config.base);
+config.cors && console.log("http-file-store cors %j", config.cors);
+
+config.cors && app.use(cors(config.cors));
+
+app.get(config.url_base+"*", fileStore.read(config));
+app.post(config.url_base+"*", upload.single('file'), fileStore.write(config));
 
 if ( config.ssl && config.ssl.key && config.ssl.cert ) {
   var SSL = https.createServer( {
@@ -131,9 +147,13 @@ if ( config.ssl && config.ssl.key && config.ssl.cert ) {
       ca: config.ssl.ca || []
   }, app );
 
+  console.log("http-file-store SSL host %s:%s", config.ssl.host, config.ssl.port);
+
   SSL.listen(config.ssl.port, config.ssl.host);
 }
 
 var CLEAR = http.createServer( app );
 
 CLEAR.listen(config.clear.port, config.clear.host);
+
+console.log("http-file-store CLEAR host %s:%s", config.clear.host, config.clear.port);
