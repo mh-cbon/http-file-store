@@ -77,7 +77,7 @@ try{
   "Configuration options are wrong : upload_path is missing"
 );
 
-(!config.clear || !config.ssl)
+(!config.clear && !config.ssl)
 && help.print(usage, pkg)
 && help.die(
   "Configuration options are wrong : you must provide one of clear or ssl options"
@@ -136,4 +136,4 @@ if ( config.ssl && config.ssl.key && config.ssl.cert ) {
 
 var CLEAR = http.createServer( app );
 
-CLEAR.listen(config.lear.port, config.clear.host);
+CLEAR.listen(config.clear.port, config.clear.host);
