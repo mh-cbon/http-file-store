@@ -48,7 +48,6 @@ var help  = require('@maboiteaspam/show-help')(usage, argv.h||argv.help, pkg)
 var debug = require('@maboiteaspam/set-verbosity')(pkg.name, argv.v || argv.verbose);
 var fs    = require('fs')
 var path  = require('path')
-var cors  = require('cors');
 
 const configPath  = argv.config || argv.c || false;
 
@@ -123,6 +122,7 @@ var https       = require('https');
 var express     = require('express');
 var bodyParser  = require('body-parser');
 var multer      = require('multer');
+var cors        = require('cors');
 var fileStore   = require('./index.js');
 
 
@@ -157,3 +157,10 @@ var CLEAR = http.createServer( app );
 CLEAR.listen(config.clear.port, config.clear.host);
 
 console.log("http-file-store CLEAR host %s:%s", config.clear.host, config.clear.port);
+
+var tearDown = function (then) {
+  CLEAR.close();
+  SSL && SSL.close();
+}
+process.on('beforeExit', tearDown)
+process.on('SIGINT', tearDown)

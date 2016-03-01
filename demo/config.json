@@ -8,7 +8,7 @@
   },
   "cors": {
       "origin": "*",
-      "credentials": "true|false",
+      "credentials": "true",
       "methods": ["GET", "POST"]
   }
 }
