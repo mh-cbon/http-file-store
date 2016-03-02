@@ -59,10 +59,10 @@ Config
   }
 ```
 
-# api
+# express handlers
 
 `http-file-store` can also be consumed as a module of your project.
-It provides two middlewares to use within an express application.
+It provides two handlers to use with an express application.
 
 ### Example
 
@@ -76,7 +76,7 @@ var app       = express();
 // but it returns JSON responses for directories.
 app.get(config.base_url, fileStore.read(config));
 
-// provide write access, use multer to manage file uploads.
+// provide write access, using multer to manage file uploads.
 app.post(config.base_url,
   upload.single('file'),
   fileStore.write(config));
@@ -88,6 +88,8 @@ app.post(config.base_url,
 `http-file-store` can read files based on url path.
 
 ### Read
+
+##### A file
 
 Given a route mounted on `/read`, and a file `some.txt`
  on the root of `config.base` directory:
@@ -103,6 +105,8 @@ Given a route mounted on `/read`, and a file `some.txt`
  When the target path provided within the url path is a `file`, the content
  is streamed to the client.
 
+ ##### A directory
+
  When the target path provided within the url path is a `directory`,
   the listing of the directory is provided as a JSON object such:
 
@@ -117,7 +121,7 @@ Given a route mounted on `/read`, and a file `some.txt`
       mtime:  stats.mtime,
       ctime:  stats.ctime,
       birthtime: stats.birthtime,
-      // only if show_absolute_path is true
+      // only if config.show_absolute_path is true
       absolute_path: path.resolve(path.join(filePath, f))
     }
   ]
@@ -131,7 +135,7 @@ Given a route mounted on `/write`, and file `other.txt` to write
 ```js
 request(app)
   .post('/write/')
-  .attach('file', path.join('other.txt'))
+  .attach('file', 'other.txt')
   .expect(200)
 ```
 
@@ -149,7 +153,7 @@ directory, much like a read access:
     mtime:  stats.mtime,
     ctime:  stats.ctime,
     birthtime: stats.birthtime,
-    // only if show_absolute_path is true
+    // only if config.show_absolute_path is true
     absolute_path: path.resolve(path.join(filePath, f))
   }
 ]
@@ -162,7 +166,6 @@ When `config.json` file is configured to allow overwrite,
 ```json
   {
     "allow_overwrite": true,
-    }
   }
 ```
 
@@ -171,9 +174,14 @@ You may overwrite a file by sending an extra __query__ parameter with the POST r
 ```js
 request(app)
   .post('/write/?overwrite=1')
-  .attach('file', path.join('other.txt'))
+  .attach('file', 'other.txt')
   .expect(200)
 ```
+
+# Todos
+
+- add range support for file streaming would be great.
+- multiple file uploads at once
 
 # Read more
 
