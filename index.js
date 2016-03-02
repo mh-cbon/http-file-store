@@ -41,12 +41,12 @@ function fsRead (config) {
 function fsWrite (config) {
   var url_base        = config.url_base || '/';
   var base            = config.base;
-  var allowOverwrite  = config.allowOverwrite;
+  var allowOverwrite  = config.allow_overwrite;
   return function (req, res, next) {
 
     var overwrite = allowOverwrite && !!req.query.overwrite;
 
-    debug('req.file=%j', req.file);
+    debug('req.file=%j allow_overwrite=%j', req.file, overwrite);
     if (!req.file) return res.status(500).end();
 
     var fileInfo  = req.file;

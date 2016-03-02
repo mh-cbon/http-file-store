@@ -36,6 +36,7 @@ Config
     "url_base": "/base/url/to/serve/files",
     "upload_path": "/base/to/temp/uploaded/files",
     "show_absolute_path": true|false,
+    "allow_overwrite": true|false,
     "ssl": {
       "port": "a number, or null for a random port",
       "host": "a host value to listen for https requests",
@@ -154,6 +155,25 @@ directory, much like a read access:
 ]
 ```
 
+##### Overwriting
+
+When `config.json` file is configured to allow overwrite,
+
+```json
+  {
+    "allow_overwrite": true,
+    }
+  }
+```
+
+You may overwrite a file by sending an extra __query__ parameter with the POST request,
+
+```js
+request(app)
+  .post('/write/?overwrite=1')
+  .attach('file', path.join('other.txt'))
+  .expect(200)
+```
 
 # Read more
 

@@ -21,6 +21,7 @@ Config
     "url_base": "/base/url/to/serve/files",
     "upload_path": "/base/to/temp/uploaded/files",
     "show_absolute_path": true|false,
+    "allow_overwrite": true|false,
     "ssl": {
       "port": "a number, or null for a random port",
       "host": "a host value to listen for https requests",
@@ -133,6 +134,7 @@ config.base = path.resolve(config.base)
 
 console.log("http-file-store url %s", config.url_base);
 console.log("http-file-store path %s", config.base);
+console.log("http-file-store allow_overwrite %s", config.allow_overwrite);
 config.cors && console.log("http-file-store cors %j", config.cors);
 
 config.cors && app.use(cors(config.cors));
