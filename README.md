@@ -108,14 +108,16 @@ Given a route mounted on `/read`, and a file `some.txt`
   ```js
   [
     {
-      name: f,
-      type: stats.isFile() ? 'file' : 'dir',
-      size: stats.size,
-      mime: mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
-      atime: stats.atime,
-      mtime: stats.mtime,
-      ctime: stats.ctime,
-      birthtime: stats.birthtime
+      name:   f,
+      type:   stats.isFile() ? 'file' : 'dir',
+      size:   stats.size,
+      mime:   mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
+      atime:  stats.atime,
+      mtime:  stats.mtime,
+      ctime:  stats.ctime,
+      birthtime: stats.birthtime,
+      // only if show_absolute_path is true
+      absolute_path: path.resolve(path.join(filePath, f))
     }
   ]
   ```
@@ -138,14 +140,16 @@ directory, much like a read access:
 ```js
 [
   {
-    name: f,
-    type: stats.isFile() ? 'file' : 'dir',
-    size: stats.size,
-    mime: mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
-    atime: stats.atime,
-    mtime: stats.mtime,
-    ctime: stats.ctime,
-    birthtime: stats.birthtime
+    name:   f,
+    type:   stats.isFile() ? 'file' : 'dir',
+    size:   stats.size,
+    mime:   mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
+    atime:  stats.atime,
+    mtime:  stats.mtime,
+    ctime:  stats.ctime,
+    birthtime: stats.birthtime,
+    // only if show_absolute_path is true
+    absolute_path: path.resolve(path.join(filePath, f))
   }
 ]
 ```
