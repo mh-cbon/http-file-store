@@ -121,7 +121,6 @@ try{
 var http        = require('http');
 var https       = require('https');
 var express     = require('express');
-var bodyParser  = require('body-parser');
 var multer      = require('multer');
 var cors        = require('cors');
 var fileStore   = require('./index.js');
