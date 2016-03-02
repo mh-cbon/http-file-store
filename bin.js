@@ -20,6 +20,7 @@ Config
     "base": "/path/to/the/directory/to/read/write/files",
     "url_base": "/base/url/to/serve/files",
     "upload_path": "/base/to/temp/uploaded/files",
+    "show_absolute_path": true|false,
     "ssl": {
       "port": "a number, or null for a random port",
       "host": "a host value to listen for https requests",

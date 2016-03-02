@@ -22,7 +22,8 @@ function fsRead (config) {
       if (err) return res.status(500).send(err);
 
       if (stats.isDirectory()) {
-        readDirectory(filePath, function (err, jsonRes) {
+        var show_absolute_path = config.show_absolute_path;
+        readDirectory(filePath, show_absolute_path, function (err, jsonRes) {
           if (err) res.status(500).send(err);
           res.status(200).json(jsonRes);
         })
@@ -80,7 +81,8 @@ function fsWrite (config) {
       debug('err=%j', err);
       removeTempFile(fileInfo.path);
       if ( err ) return res.status(500).json(err);
-      readDirectory(directory, function (err, jsonRes) {
+      var show_absolute_path = config.show_absolute_path;
+      readDirectory(directory, show_absolute_path, function (err, jsonRes) {
         if (err) res.status(500).json(err);
         res.status(200).json(jsonRes);
       })
@@ -146,7 +148,7 @@ function setNormalPermissions( filename, then ) {
   });
 }
 
-function readDirectory( filePath, then ) {
+function readDirectory( filePath, show_absolute_path, then ) {
   fs.readdir(filePath, function (err, files) {
     if (err) return then({
       error: 'error reading directory',
@@ -155,17 +157,20 @@ function readDirectory( filePath, then ) {
     })
     var jsonRes = [];
     files.forEach(function (f) {
-      var stats = fs.statSync(path.join(filePath, f))
-      jsonRes.push({
-        name: f,
-        type: stats.isFile() ? 'file' : 'dir',
-        size: stats.size,
-        mime: mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
-        atime: stats.atime,
-        mtime: stats.mtime,
-        ctime: stats.ctime,
+      var absolute_path = path.resolve(path.join(filePath, f));
+      var stats = fs.statSync(absolute_path);
+      var item = {
+        name:   f,
+        type:   stats.isFile() ? 'file' : 'dir',
+        size:   stats.size,
+        mime:   mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
+        atime:  stats.atime,
+        mtime:  stats.mtime,
+        ctime:  stats.ctime,
         birthtime: stats.birthtime
-      })
+      };
+      if (show_absolute_path) item.absolute_path = absolute_path;
+      jsonRes.push(item)
     })
     then(null, jsonRes)
   });
