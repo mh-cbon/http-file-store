@@ -105,7 +105,7 @@ Given a route mounted on `/read`, and a file `some.txt`
  When the target path provided within the url path is a `file`, the content
  is streamed to the client.
 
- ##### A directory
+##### A directory
 
  When the target path provided within the url path is a `directory`,
   the listing of the directory is provided as a JSON object such:
