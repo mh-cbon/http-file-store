@@ -180,7 +180,7 @@ request(app)
 
 # Todos
 
-- add range support for file streaming would be great.
+- ~~add range support for file streaming would be great.~~
 - multiple file uploads at once
 
 # Read more
