@@ -123,7 +123,8 @@ if (config.ssl) {
 
 if (!config.cors) {
   config.cors = {
-    "origin": "*",
+    "origin": true,
+    "credentials": true,
     "methods": ["GET", "PUT", "POST"],
     "maxAge": 600
   };
