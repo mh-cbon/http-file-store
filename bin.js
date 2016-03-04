@@ -9,6 +9,7 @@ Usage
 Options
 
   --config  | -c   Path to the JSON configuration file
+  --port    | -p   Port of the CLEAR http server, if no configuration is provided.
   --verbose | -v   Enable verbosity pass in the module list to debug.
 
 Config
@@ -48,75 +49,85 @@ var pkg   = require('./package.json')
 var argv  = require('minimist')(process.argv.slice(2));
 var help  = require('@maboiteaspam/show-help')(usage, argv.h||argv.help, pkg)
 var debug = require('@maboiteaspam/set-verbosity')(pkg.name, argv.v || argv.verbose);
-var fs    = require('fs')
+var fs    = require('node-fs')
 var path  = require('path')
 
 const configPath  = argv.config || argv.c || false;
-
-(!configPath) && help.print(usage, pkg) && help.die(
-  "Wrong invokation"
-);
-
+const port  = argv.port || argv.p || 8091;
 var config = {}
-try{
-  config = require(path.join(process.cwd(), configPath))
-}catch(ex){
-  help.die(
-    "Config path must exist and be a valid JSON file.\n" + ex
+
+if (configPath) {
+  try{
+    config = require(path.join(process.cwd(), configPath))
+    config = require(path.join(process.cwd(), configPath))
+  }catch(ex){
+    help.die(
+      "Config path must exist and be a valid JSON file.\n" + ex
+    );
+  }
+  (!config) && help.print(usage, pkg)
+  && help.die(
+    "The configuration could not be loaded, please double check the file"
   );
 }
 
-(!config) && help.print(usage, pkg)
-&& help.die(
-  "The configuration could not be loaded, please double check the file"
-);
+if (!config.base) {
+  config.base = "./store"
+}
 
-(!config.base) && help.print(usage, pkg)
-&& help.die(
-  "Configuration options are wrong : base is missing"
-);
+if (!config.url_base) {
+  config.url_base = "/"
+}
 
-(!config.url_base)
-&& help.print(usage, pkg)
-&& help.die(
-  "Configuration options are wrong : url_base is missing"
-);
+if (!config.upload_path) {
+  config.upload_path = "/tmp"
+}
 
-(!config.upload_path)
-&& help.print(usage, pkg)
-&& help.die(
-  "Configuration options are wrong : upload_path is missing"
-);
+if (!config.clear) {
+  config.clear = {
+    host: '127.0.0.1',
+    port: argv.port || argv.p || 8091
+  }
+}
 
-(!config.clear && !config.ssl)
-&& help.print(usage, pkg)
-&& help.die(
-  "Configuration options are wrong : you must provide one of clear or ssl options"
-);
+if (config.base) config.base = path.join(process.cwd(), config.base)
 
-(!fs.existsSync(config.base))
-&& help.print(usage, pkg)
-&& help.die(
-  "Configuration options are wrong : base directory must exist"
-);
+if (config.base && !fs.existsSync(config.base)) {
+  fs.mkdirSync(config.base, '0755', true)
+}
 
-(config.ssl && !fs.existsSync(config.ssl.key))
-&& help.print(usage, pkg)
-&& help.die(
-  "Configuration options are wrong : SSL key file must exist"
-);
+if (config.ssl) {
+  (!config.ssl.key && !config.ssl.cert)
+  && help.print(usage, pkg)
+  && help.die(
+    "Configuration options are wrong : SSL requires a key and a cert"
+  );
+  (config.ssl.key && !fs.existsSync(config.ssl.key))
+  && help.print(usage, pkg)
+  && help.die(
+    "Configuration options are wrong : SSL key file must exist"
+  );
 
-(config.ssl && config.ssl.ca && !fs.existsSync(config.ssl.ca))
-&& help.print(usage, pkg)
-&& help.die(
-  "Configuration options are wrong : SSL ca file must exist"
-);
+  (config.ssl.ca && config.ssl.ca && !fs.existsSync(config.ssl.ca))
+  && help.print(usage, pkg)
+  && help.die(
+    "Configuration options are wrong : SSL ca file must exist"
+  );
 
-(config.ssl && !fs.existsSync(config.ssl.cert))
-&& help.print(usage, pkg)
-&& help.die(
-  "Configuration options are wrong : SSL cert file must exist"
-);
+  (config.ssl.cert && !fs.existsSync(config.ssl.cert))
+  && help.print(usage, pkg)
+  && help.die(
+    "Configuration options are wrong : SSL cert file must exist"
+  );
+}
+
+if (!config.cors) {
+  config.cors = {
+    "origin": "*",
+    "methods": ["GET", "PUT", "POST"],
+    "maxAge": 600
+  };
+}
 
 
 var http        = require('http');
@@ -130,7 +141,6 @@ var fileStore   = require('./index.js');
 var upload = multer({ dest: config.upload_path });
 var app = express();
 
-config.base = path.resolve(config.base)
 
 console.log("http-file-store url %s", config.url_base);
 console.log("http-file-store path %s", config.base);
@@ -142,7 +152,7 @@ config.cors && app.use(cors(config.cors));
 app.get(config.url_base+"*", fileStore.read(config));
 app.post(config.url_base+"*", upload.single('file'), fileStore.write(config));
 
-if ( config.ssl && config.ssl.key && config.ssl.cert ) {
+if (config.ssl && config.ssl.key && config.ssl.cert) {
   var SSL = https.createServer( {
       key: fs.readFileSync( config.ssl.key ),
       cert: fs.readFileSync( config.ssl.cert ),

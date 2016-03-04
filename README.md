@@ -24,6 +24,7 @@ Usage
 Options
 
   --config  | -c   Path to the JSON configuration file
+  --port    | -p   Port of the CLEAR http server, if no configuration is provided.
   --verbose | -v   Enable verbosity pass in the module list to debug.
 
 Config
