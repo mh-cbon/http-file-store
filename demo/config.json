@@ -7,8 +7,8 @@
     "host": "localhost"
   },
   "cors": {
-      "origin": "*",
-      "credentials": "true",
-      "methods": ["GET", "POST"]
+    "origin": "*",
+    "credentials": "true",
+    "methods": ["GET", "POST"]
   }
 }
