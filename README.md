@@ -33,11 +33,14 @@ Config
   apply to your instance of http-file-store.
 
   {
-    "base": "/path/to/the/directory/to/read/write/files",
-    "url_base": "/base/url/to/serve/files",
-    "upload_path": "/base/to/temp/uploaded/files",
+    "url_base": "/base/url/to/serve/files/ending/with/a/slash",
+    "upload_path": "/path/to/temp/uploaded/files",
     "show_absolute_path": true|false,
     "allow_overwrite": true|false,
+    "configurable_alias": true|false,
+    "aliases": {
+      "alias_name": "/path/to/the/directory/to/read/write/files"
+    },
     "ssl": {
       "port": "a number, or null for a random port",
       "host": "a host value to listen for https requests",
@@ -75,12 +78,10 @@ var app       = express();
 
 // provide a read access, much like serve-static,
 // but it returns JSON responses for directories.
-app.get(config.base_url, fileStore.read(config));
+app.get(config.url_base + ":alias/*", fileStore.read(config));
 
 // provide write access, using multer to manage file uploads.
-app.post(config.base_url,
-  upload.single('file'),
-  fileStore.write(config));
+app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
 
 ```
 
@@ -93,7 +94,7 @@ app.post(config.base_url,
 ##### A file
 
 Given a route mounted on `/read`, and a file `some.txt`
- on the root of `config.base` directory:
+on the root of an `empty` aliased directory (`{alias:{"":"/path/"}}`):
 
  ```js
  request(app)
@@ -103,13 +104,13 @@ Given a route mounted on `/read`, and a file `some.txt`
    .end(done)
  ```
 
- When the target path provided within the url path is a `file`, the content
- is streamed to the client.
+When the target path provided within the url path is recognized as a `file`,
+the content is streamed to the client.
 
 ##### A directory
 
- When the target path provided within the url path is a `directory`,
-  the listing of the directory is provided as a JSON object such:
+When the target path provided within the url path is recognized as a `directory`,
+the listing of the directory is returned as a JSON object such:
 
   ```js
   [
@@ -122,7 +123,7 @@ Given a route mounted on `/read`, and a file `some.txt`
       mtime:  stats.mtime,
       ctime:  stats.ctime,
       birthtime: stats.birthtime,
-      // only if config.show_absolute_path is true
+      // only when config.show_absolute_path is true
       absolute_path: path.resolve(path.join(filePath, f))
     }
   ]
@@ -130,8 +131,8 @@ Given a route mounted on `/read`, and a file `some.txt`
 
 ### Write
 
-Given a route mounted on `/write`, and file `other.txt` to write
- on the root of `config.base` directory:
+Given a route mounted on `/write`, and a file `other.txt` to write
+on the root of an `empty` aliased directory (`{alias:{"":"/path/"}}`):
 
 ```js
 request(app)
@@ -165,9 +166,9 @@ directory, much like a read access:
 When `config.json` file is configured to allow overwrite,
 
 ```json
-  {
-    "allow_overwrite": true,
-  }
+{
+  "allow_overwrite": true,
+}
 ```
 
 You may overwrite a file by sending an extra __query__ parameter with the POST request,
@@ -176,6 +177,86 @@ You may overwrite a file by sending an extra __query__ parameter with the POST r
 request(app)
   .post('/write/?overwrite=1')
   .attach('file', 'other.txt')
+  .expect(200)
+```
+
+### Delete
+
+__To be implemented.__
+
+##### A file
+
+```js
+request(app)
+  .post('/delete/some.txt')
+  .expect(200)
+```
+
+##### A directory
+
+```js
+request(app)
+  .post('/delete/other/?recursive=1')
+  .expect(200)
+```
+
+### Configure aliases
+
+When `config.configurable_alias` is true, the binary will add new routes to
+get / add / remove aliases.
+
+##### Get
+
+Given a route mounted on `/aliases`, retrieve aliases object as a JSON response.
+
+```js
+request(app)
+  .get('/aliases/')
+  .expect('Content-Type', /json/)
+  .expect(200)
+```
+
+##### Add
+
+Given a route mounted on `/add`, you may add an alias to the current
+configuration by doing a POST request with an `alias` and a `path` fields.
+
+```js
+request(app)
+  .post('/add/')
+  .field('alias', 'name')
+  .field('path', 'path of the alias')
+  .expect(200)
+```
+
+You may persist the new configuration by sending an extra __query__ parameter with the POST request,
+
+```js
+request(app)
+  .post('/add/?persist=1')
+  .field('alias', 'name')
+  .field('path', 'path of the alias')
+  .expect(200)
+```
+
+##### Remove
+
+Given a route mounted on `/remove`, you may remove an `alias` of the current
+configuration by doing a POST request with an `alias` fields.
+
+```js
+request(app)
+  .post('/remove/')
+  .field('alias', 'name')
+  .expect(200)
+```
+
+You may persist the new configuration by sending an extra __query__ parameter with the POST request,
+
+```js
+request(app)
+  .post('/remove/?persist=1')
+  .field('alias', 'name')
   .expect(200)
 ```
 

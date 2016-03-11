@@ -7,7 +7,7 @@
     "http-file-store": "./bin.js"
   },
   "scripts": {
-    "test": "rm -fr test/fixtures && node test/index.js"
+    "test": "rm -fr test/fixtures* && node test/*.js"
   },
   "repository": {
     "type": "git",
@@ -29,6 +29,7 @@
     "@maboiteaspam/set-verbosity": "^2.0.3",
     "@maboiteaspam/show-help": "^3.0.0",
     "async": "^1.5.2",
+    "body-parser": "^1.15.0",
     "cors": "^2.7.1",
     "debug": "^2.2.0",
     "express": "^4.13.4",

@@ -1,35 +1,45 @@
 
-var pkg     = require('./package.json')
-var fs      = require('node-fs');
-var path    = require('path');
-var async   = require('async');
-var mime    = require('mime');
-var send    = require('send');
-var debug   = require('debug')(pkg.name);
+var pkg       = require('./package.json')
+var fs        = require('node-fs');
+var path      = require('path');
+var async     = require('async');
+var mime      = require('mime');
+var send      = require('send');
+var reqFsPath = require('./lib/req_to_filepath.js');
+var debug     = require('debug')(pkg.name);
 
 function fsRead (config) {
-  var url_base  = config.url_base || '/';
-  var base      = config.base;
   return function (req, res, next) {
-    var filePath = path.join(base, req.path.substr(url_base.length));
+    var filePath = reqFsPath(config, req);
 
     debug('filepath=%s', filePath);
 
-    if(filePath.match(/[.]{1,2}\//)) return res.status(500).end();
+    if(!filePath) return res.status(500).json({
+      error: 'File does not exist',
+      message: null
+    });
+
+    if(filePath.match(/[.]{1,2}\//)) return res.status(500).json({
+      error: 'Unexpected parameters value',
+      message: null
+    });
 
     fs.lstat(filePath, function (err, stats) {
-      debug('err=%j, stats=%j', err, stats);
-      if (err) return res.status(500).send(err);
+      err && console.error(err);
+      if (err) return res.status(500).json({
+        error: 'File does not exist',
+        message: err
+      });
 
       if (stats.isDirectory()) {
         var show_absolute_path = config.show_absolute_path;
         readDirectory(filePath, show_absolute_path, function (err, jsonRes) {
-          if (err) res.status(500).send(err);
+          if (err) return res.status(500).json(err);
           res.status(200).json(jsonRes);
         })
       }
       if (stats.isFile()) {
-        send(req, req.url, {root: base})
+        send(req, filePath, {extensions: false, index: false})
           .on('error', console.error.bind(console))
           .pipe(res);
       }
@@ -39,29 +49,36 @@ function fsRead (config) {
 }
 
 function fsWrite (config) {
-  var url_base        = config.url_base || '/';
-  var base            = config.base;
   var allowOverwrite  = config.allow_overwrite;
+  var showAbsPath     = config.show_absolute_path;
   return function (req, res, next) {
 
     var overwrite = allowOverwrite && !!req.query.overwrite;
 
     debug('req.file=%j allow_overwrite=%j', req.file, overwrite);
-    if (!req.file) return res.status(500).end();
+    if (!req.file) return res.status(500).json({
+      error: 'Missing "file" parameter',
+      message: null
+    });
 
     var fileInfo  = req.file;
     var filename  = fileInfo.originalname;
-    var directory = path.join(base, req.path.substr(url_base.length));
+    var directory = reqFsPath(config, req);
 
     debug('directory=%s', directory);
-    if(directory.match(/[.]{1,2}\//))
-      return removeTempFiles(req.file) && res.status(500).end();
-
     debug('filename=%s', filename);
-    if(filename.match(/[.]{1,2}\//))
-      return removeTempFiles(req.file) && res.status(500).end();
+    if( !directory ||
+        directory.match(/[.]{1,2}\//) ||   // must not match ./ or ../
+        filename.match(/\\|\//) )          // must not match any slash, dot is allowed.
+      return removeTempFile(fileInfo.path, function (err) {
+        err && console.error(err);
+        res.status(500).json({
+          error: 'Unexpected parameters value',
+          message: null
+        });
+      });
 
-    var filePath = path.join( directory, filename );
+    var filePath = path.join(directory, filename);
     debug('filePath=%s', filePath);
 
     async.series( [
@@ -78,18 +95,105 @@ function fsWrite (config) {
         setNormalPermissions.bind( null, filePath )
 
     ], function( err ) {
-      debug('err=%j', err);
-      removeTempFile(fileInfo.path);
-      if ( err ) return res.status(500).json(err);
-      var show_absolute_path = config.show_absolute_path;
-      readDirectory(directory, show_absolute_path, function (err, jsonRes) {
-        if (err) res.status(500).json(err);
-        res.status(200).json(jsonRes);
-      })
+      err && console.error(err);
+      removeTempFile(fileInfo.path, function (cleanUpErr) {
+        cleanUpErr && console.error(cleanUpErr);
+        if ( err ) return res.status(500).json(err);
+        readDirectory(directory, showAbsPath, function (err, jsonRes) {
+          if (err) return res.status(500).json(err);
+          res.status(200).json(jsonRes);
+        })
+      });
     });
 
   }
 }
+
+function fsDelete (config) {
+  return function (req, res, next) {
+    res.status(500).send({
+      error : 'not implemented'
+    })
+  }
+}
+
+// alias manipulation
+function aliasesGet (config) {
+  return function (req, res, next) {
+    return res.status(200).json(config.aliases || {})
+  }
+}
+function aliasAdd (config, configPath) {
+  return function (req, res, next) {
+    var name      = req.body.name;
+    var aliasPath = req.body.path;
+
+    if (name in config.aliases) return res.status(500).json({
+      error: 'Alias already exist',
+      message: err
+    });
+
+    fs.lstat(aliasPath, function (err, stats) {
+      err && console.error(err);
+      if (err) return res.status(500).json({
+        error: 'Path does not exist',
+        message: err
+      });
+
+      if (!stats.isDirectory()) return res.status(500).json({
+        error: 'Path must be a directory',
+        message: err
+      });
+
+      config.aliases[name] = path;
+
+      if (!req.persist) return;
+
+      fs.writeFile(configPath, JSON.stringify(config, null, 4), function (err) {
+        if (err) {
+          console.error(err);
+          delete config.aliases[name];
+          return res.status(500).json({
+            error: 'Failed to write the configuration file',
+            message: err
+          });
+        }
+        res.status(200).json({});
+      })
+
+    })
+  }
+}
+function aliasRemove (config) {
+  return function (req, res, next) {
+    var name      = req.body.name;
+
+    if (!(name in config.aliases)) return res.status(500).json({
+      error: 'Alias does not exist',
+      message: err
+    });
+
+    var oldPath = config.aliases[name];
+    delete config.aliases[name];
+
+    if (!req.persist) return;
+
+    fs.writeFile(configPath, JSON.stringify(config, null, 4), function (err) {
+      if (err) {
+        console.error(err);
+        config.aliases[name] = oldPath;
+        return res.status(500).json({
+          error: 'Failed to write the configuration file',
+          message: err
+        });
+      }
+      res.status(200).json({});
+    })
+
+  }
+}
+
+// utilities
 
 function checkExists( filename, overwritable, then ) {
   fs.exists( filename, function( exists ) {
@@ -148,7 +252,7 @@ function setNormalPermissions( filename, then ) {
   });
 }
 
-function readDirectory( filePath, show_absolute_path, then ) {
+function readDirectory( filePath, showAbsPath, then ) {
   fs.readdir(filePath, function (err, files) {
     if (err) return then({
       error: 'error reading directory',
@@ -157,30 +261,42 @@ function readDirectory( filePath, show_absolute_path, then ) {
     })
     var jsonRes = [];
     files.forEach(function (f) {
-      var absolute_path = path.resolve(path.join(filePath, f));
-      var stats = fs.statSync(absolute_path);
+      var absPath = path.resolve(path.join(filePath, f));
+      var stats = fs.statSync(absPath);
       var item = {
         name:   f,
         type:   stats.isFile() ? 'file' : 'dir',
         size:   stats.size,
-        mime:   mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
+        mime:   mime.lookup(f) || 'application/octet-stream',
         atime:  stats.atime,
         mtime:  stats.mtime,
         ctime:  stats.ctime,
         birthtime: stats.birthtime
       };
-      if (show_absolute_path) item.absolute_path = absolute_path;
+      if (showAbsPath) item.absolute_path = absPath;
       jsonRes.push(item)
     })
     then(null, jsonRes)
   });
 }
 
-function removeTempFile(filePath){
-  if(fs.existsSync(filePath)) fs.unlinkSync(filePath);
+function removeTempFile(filePath, then){
+  if(fs.access) return fs.access(filePath, fs.R_OK, function (err) {
+    if(err) return then(err);
+    fs.unlink(filePath, then)
+  })
+  fs.exists && fs.exists(filePath, function (exists) {
+    if(exists) return fs.unlink(filePath, then)
+    then(err)
+  })
 }
 
 module.exports = {
-  read: fsRead,
-  write: fsWrite
+  aliases: {
+    get:    aliasesGet,
+    add:    aliasAdd,
+    remove: aliasRemove
+  },
+  read:   fsRead,
+  write:  fsWrite
 }

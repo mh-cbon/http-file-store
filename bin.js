@@ -18,11 +18,14 @@ Config
   apply to your instance of http-file-store.
 
   {
-    "base": "/path/to/the/directory/to/read/write/files",
-    "url_base": "/base/url/to/serve/files",
+    "url_base": "/base/url/to/serve/files/ending/with/slash",
     "upload_path": "/base/to/temp/uploaded/files",
     "show_absolute_path": true|false,
     "allow_overwrite": true|false,
+    "configurable_alias": true|false,
+    "aliases": {
+      "url_name": "/path/to/the/directory/to/read/write/files"
+    },
     "ssl": {
       "port": "a number, or null for a random port",
       "host": "a host value to listen for https requests",
@@ -57,9 +60,9 @@ const port  = argv.port || argv.p || 8091;
 var config = {}
 
 if (configPath) {
+  configPath = require(path.join(process.cwd(), configPath))
   try{
-    config = require(path.join(process.cwd(), configPath))
-    config = require(path.join(process.cwd(), configPath))
+    config = require(configPath)
   }catch(ex){
     help.die(
       "Config path must exist and be a valid JSON file.\n" + ex
@@ -71,8 +74,14 @@ if (configPath) {
   );
 }
 
-if (!config.base) {
-  config.base = "./store"
+if (!config.aliases) {
+  config.aliases = {}
+  if (config.base) {
+    config.aliases = {
+      "": "./store"
+    }
+    delete config.base;
+  }
 }
 
 if (!config.url_base) {
@@ -90,7 +99,9 @@ if (!config.clear) {
   }
 }
 
-if (config.base) config.base = path.join(process.cwd(), config.base)
+Object.keys(config.aliases).forEach(function (alias){
+  config.aliases[alias] = path.resolve(process.cwd(), config.aliases[alias])
+})
 
 if (config.base && !fs.existsSync(config.base)) {
   fs.mkdirSync(config.base, '0755', true)
@@ -135,9 +146,9 @@ var http        = require('http');
 var https       = require('https');
 var express     = require('express');
 var multer      = require('multer');
+var bodyParser  = require('body-parser');
 var cors        = require('cors');
 var fileStore   = require('./index.js');
-
 
 var upload = multer({ dest: config.upload_path });
 var app = express();
@@ -150,14 +161,22 @@ config.cors && console.log("http-file-store cors %j", config.cors);
 
 config.cors && app.use(cors(config.cors));
 
-app.get(config.url_base+"*", fileStore.read(config));
-app.post(config.url_base+"*", upload.single('file'), fileStore.write(config));
+app.get(config.url_base + ":alias/*", fileStore.read(config));
+app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
+
+if (config.configurable_alias) {
+  app.get(config.url_base + "aliases", fileStore.aliases.getAliases(config));
+  app.post(config.url_base + "add/",
+    bodyParser.urlencoded({extended: !true}), fileStore.aliases.addAlias(config, configPath));
+  app.post(config.url_base + "remove/",
+    bodyParser.urlencoded({extended: !true}), fileStore.aliases.removeAlias(config));
+}
 
 if (config.ssl && config.ssl.key && config.ssl.cert) {
   var SSL = https.createServer( {
-      key: fs.readFileSync( config.ssl.key ),
+      key:  fs.readFileSync( config.ssl.key ),
       cert: fs.readFileSync( config.ssl.cert ),
-      ca: config.ssl.ca || []
+      ca:   config.ssl.ca || []
   }, app );
 
   console.log("http-file-store SSL host %s:%s", config.ssl.host, config.ssl.port);
