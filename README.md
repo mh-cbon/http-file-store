@@ -107,6 +107,15 @@ on the root of an `empty` aliased directory (`{alias:{"":"/path/"}}`):
 When the target path provided within the url path is recognized as a `file`,
 the content is streamed to the client.
 
+You may force file download by sending an extra __query__ parameter with the POST request,
+
+```js
+request(app)
+  .post('/write/?download=1')
+  .expect('Content-Disposition', /attachment/)
+  .expect(200)
+```
+
 ##### A directory
 
 When the target path provided within the url path is recognized as a `directory`,
