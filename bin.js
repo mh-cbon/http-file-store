@@ -55,12 +55,12 @@ var debug = require('@maboiteaspam/set-verbosity')(pkg.name, argv.v || argv.verb
 var fs    = require('node-fs')
 var path  = require('path')
 
-const configPath  = argv.config || argv.c || false;
+var configPath  = argv.config || argv.c || false;
 const port  = argv.port || argv.p || 8091;
 var config = {}
 
 if (configPath) {
-  configPath = require(path.join(process.cwd(), configPath))
+  configPath = path.resolve(process.cwd(), configPath);
   try{
     config = require(configPath)
   }catch(ex){
@@ -78,7 +78,7 @@ if (!config.aliases) {
   config.aliases = {}
   if (config.base) {
     config.aliases = {
-      "": "./store"
+      "": config.base
     }
     delete config.base;
   }
@@ -100,12 +100,11 @@ if (!config.clear) {
 }
 
 Object.keys(config.aliases).forEach(function (alias){
-  config.aliases[alias] = path.resolve(process.cwd(), config.aliases[alias])
+  config.aliases[alias] = path.join(process.cwd(), config.aliases[alias])
+  if (!fs.existsSync(config.aliases[alias])) {
+    fs.mkdirSync(config.aliases[alias], '0755', true)
+  }
 })
-
-if (config.base && !fs.existsSync(config.base)) {
-  fs.mkdirSync(config.base, '0755', true)
-}
 
 if (config.ssl) {
   (!config.ssl.key && !config.ssl.cert)
@@ -154,15 +153,21 @@ var upload = multer({ dest: config.upload_path });
 var app = express();
 
 
-console.log("http-file-store url %s", config.url_base);
-console.log("http-file-store path %s", config.base);
+console.log("http-file-store url_base %s", config.url_base);
+console.log("http-file-store alias %j", config.aliases);
 console.log("http-file-store allow_overwrite %s", config.allow_overwrite);
 config.cors && console.log("http-file-store cors %j", config.cors);
 
 config.cors && app.use(cors(config.cors));
 
-app.get(config.url_base + ":alias/*", fileStore.read(config));
-app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
+if (config.aliases[""]) {
+  app.get(config.url_base + "*", fileStore.read(config));
+  app.post(config.url_base + "*", upload.single('file'), fileStore.write(config));
+} else {
+  app.get(config.url_base, fileStore.root(config));
+  app.get(config.url_base + ":alias/*", fileStore.read(config));
+  app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
+}
 
 if (config.configurable_alias) {
   app.get(config.url_base + "aliases", fileStore.aliases.getAliases(config));
@@ -179,7 +184,7 @@ if (config.ssl && config.ssl.key && config.ssl.cert) {
       ca:   config.ssl.ca || []
   }, app );
 
-  console.log("http-file-store SSL host %s:%s", config.ssl.host, config.ssl.port);
+  console.log("http-file-store SSL host %s:%s", config.ssl.host || '0.0.0.0', config.ssl.port);
 
   SSL.listen(config.ssl.port, config.ssl.host);
 }
@@ -188,11 +193,12 @@ var CLEAR = http.createServer( app );
 
 CLEAR.listen(config.clear.port, config.clear.host);
 
-console.log("http-file-store CLEAR host %s:%s", config.clear.host, config.clear.port);
+console.log("http-file-store CLEAR host %s:%s", config.clear.host || '0.0.0.0', config.clear.port);
 
 var tearDown = function (then) {
-  CLEAR.close();
+  CLEAR && CLEAR.close();
   SSL && SSL.close();
+  process.exit(1)
 }
 process.on('beforeExit', tearDown)
 process.on('SIGINT', tearDown)
