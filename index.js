@@ -41,6 +41,10 @@ function fsRead (config) {
       if (stats.isFile()) {
         send(req, filePath, {extensions: false, index: false})
           .on('error', console.error.bind(console))
+          .on('headers', function headers(res, p, s) {
+            req.query.download==='1' &&
+            res.setHeader('Content-Disposition', 'attachment; filename=' + path.basename(filePath));
+          })
           .pipe(res);
       }
 
@@ -118,6 +122,26 @@ function fsDelete (config) {
 }
 
 // alias manipulation
+function getRoot (config) {
+  return function (req, res, next) {
+    var jsonRes = [];
+    Object.keys(config.aliases).forEach(function (alias) {
+      var item = {
+        name:   alias,
+        type:   'alias',
+        size:   0,
+        mime:   'application/octet-stream',
+        atime:  0,
+        mtime:  0,
+        ctime:  0,
+        birthtime: 0
+      };
+      if (config.show_absolute_path) item.absolute_path = null;
+      jsonRes.push(item)
+    })
+    return res.status(200).json(jsonRes)
+  }
+}
 function aliasesGet (config) {
   return function (req, res, next) {
     return res.status(200).json(config.aliases || {})
@@ -194,7 +218,6 @@ function aliasRemove (config) {
 }
 
 // utilities
-
 function checkExists( filename, overwritable, then ) {
   fs.exists( filename, function( exists ) {
     var err;
@@ -297,6 +320,7 @@ module.exports = {
     add:    aliasAdd,
     remove: aliasRemove
   },
+  root:   getRoot,
   read:   fsRead,
   write:  fsWrite
 }
