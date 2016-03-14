@@ -250,7 +250,7 @@ function aliasAdd (config, configPath) {
             message: err
           });
         }
-        res.status(200).json(listAliasesAsDirectories(config))
+        return res.status(200).json(config.aliases || {})
       })
 
     })
@@ -279,7 +279,7 @@ function aliasRemove (config) {
           message: err
         });
       }
-      res.status(200).json(listAliasesAsDirectories(config))
+      return res.status(200).json(config.aliases || {})
     })
 
   }

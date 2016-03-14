@@ -174,7 +174,7 @@ Read root directory content and return it as a JSON object.
 
 ##### GET /:path
 
-Read a path, if it is a directory, returns its content as a JSON object. If its a file, stream its content.
+Read a path, if it is a directory, returns its content as a JSON object. If its a file, stream its content. Use `download=1` to force file download.
 
 ##### POST /:path/file
 
@@ -192,7 +192,7 @@ Returns the list of `aliases` as a directory listing.
 
 ##### GET /:alias/:path
 
-Read a `path` within given `alias`, if it is a directory, returns its content as a JSON object. If its a file, stream its content.
+Read a `path` within given `alias`, if it is a directory, returns its content as a JSON object. If its a file, stream its content. Use `download=1` to force file download.
 
 ##### POST /:alias/:path/file
 
@@ -377,13 +377,13 @@ directory, much like a read access:
 When `config.configurable_alias` is true, the binary will add new routes to
 get / add / remove aliases.
 
-##### Get
+##### Read
 
-Given a route mounted on `/aliases`, retrieve aliases object as of a directory listing
+Given a route mounted on `/`, retrieve aliases object as of a directory listing
 
 ```js
 request(app)
-  .get('/aliases/')
+  .get('/')
   .expect('Content-Type', /json/)
   .expect(200)
 ```
@@ -407,9 +407,29 @@ Response will be such
 ]
 ```
 
+##### Get
+
+Given a route mounted on `/aliases`, retrieve aliases object
+
+```js
+request(app)
+  .get('/aliases/')
+  .expect('Content-Type', /json/)
+  .expect(200)
+```
+
+Response will be such
+
+```js
+{
+  "name": "/path/",
+  "name1": "/path1/",
+}
+```
+
 ##### Add
 
-Given a route mounted on `/add`, you may add an alias to the current
+Given a route mounted on `/add`, you may add a new `alias` to the current
 configuration by doing a POST request with an `alias` and a `path` fields.
 
 ```js
@@ -433,20 +453,10 @@ request(app)
 Returns the new list of aliases as a directory listing
 
 ```js
-[
-  {
-    name:   aliasName,
-    type:   'alias',
-    size:   0
-    mime:   'application/octet-stream',
-    atime:  0,
-    mtime:  0,
-    ctime:  0,
-    birthtime: 0,
-    // only if config.show_absolute_path is true
-    absolute_path: path.resolve(process.cwd(), config.aliases[alias])
-  }
-]
+{
+  "name": "/path/",
+  "name1": "/path1/",
+}
 ```
 
 ##### Remove
@@ -473,20 +483,10 @@ request(app)
 Returns the new list of aliases as a directory listing
 
 ```js
-[
-  {
-    name:   aliasName,
-    type:   'alias',
-    size:   0
-    mime:   'application/octet-stream',
-    atime:  0,
-    mtime:  0,
-    ctime:  0,
-    birthtime: 0,
-    // only if config.show_absolute_path is true
-    absolute_path: path.resolve(process.cwd(), config.aliases[alias])
-  }
-]
+{
+  "name": "/path/",
+  "name1": "/path1/",
+}
 ```
 
 # Todos
