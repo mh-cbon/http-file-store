@@ -93,8 +93,7 @@ app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
 
 The configuration is set via a `config.json` file defined from the command line invocation with `-c|--config` parameter.
 
-
-##### Setting the root paths to serve
+#### Setting the root paths to serve
 
 To set the root path of the file system managed via the API, you can define those options:
 
@@ -122,6 +121,32 @@ Doing so enable you to serve multiple root directories.
 To fetch the list of alias, you can query `/`.
 
 To fetch the content of an alias, you can query `/my_alias/` and so on.
+
+#### Other noticeable options
+
+##### allow_delete: true
+
+Enable a new route to delete files and directories.
+
+##### show_absolute_path: true
+
+Add a property to the directory listing which provides the full path of the item on the remote system.
+
+##### allow_overwrite: true
+
+Allow file overwrite capabilities.
+
+##### configurable_alias: true
+
+Enable a new routes to manage configuration aliases fro the API.
+
+##### upload_path: "/path/to/save/tmp/uploaded/files"
+
+Defines the path of the directory to write temporary uploaded files.
+
+##### url_base: "/base/url/of/api/"
+
+Defines the base url from which the API is served. Must end with a `/`.
 
 # http api
 
@@ -228,8 +253,6 @@ request(app)
 ```
 
 ### Delete
-
-You can enable a route to delete items by adding `allow_delete: true` to the configuration.
 
 ##### A file
 
