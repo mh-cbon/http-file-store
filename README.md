@@ -64,48 +64,7 @@ Config
   }
 ```
 
-# express handlers
-
-`http-file-store` can also be consumed as a module of your project.
-It provides multiple handlers to use with an express application.
-
-### Example
-
-```js
-
-var fileStore = require('http-file-store');
-var upload    = multer({ dest: config.upload_path });
-var app       = express();
-
-// list aliases root directories
-// but it returns JSON responses for directories.
-app.get(config.url_base + "", fileStore.root(config));
-
-// provide a read access, much like serve-static,
-// but it returns JSON responses for directories.
-app.get(config.url_base + ":alias/*", fileStore.read(config));
-
-// provide write access, using multer to manage file uploads.
-app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
-
-// provide delete access, using multer to manage file uploads.
-app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
-
-// provides aliases management routes
-if (config.configurable_alias) {
-  // list alias object from the config
-  app.get(config.url_base + "aliases", fileStore.aliases.get(config));
-
-  // add an alias to the configuration
-  app.post(config.url_base + "aliases/add/",
-    bodyParser.urlencoded({extended: !true}), fileStore.aliases.add(config, configPath));
-
-  // remove an alias from the configuration
-  app.post(config.url_base + "aliases/remove/",
-    bodyParser.urlencoded({extended: !true}), fileStore.aliases.remove(config));
-}
-
-```
+# bin
 
 ### Configuration
 
@@ -202,6 +161,48 @@ Write a file on given `path` within given `alias`. Use `overwrite=1` to overwrit
 
 Unlink a `file` or a `directory` within given `alias`. Use `recursive=1` to recursively delete a directory.
 
+# express handlers
+
+`http-file-store` can also be consumed as a module of your project.
+It provides multiple handlers to use with an express application.
+
+### Example
+
+```js
+
+var fileStore = require('http-file-store');
+var upload    = multer({ dest: config.upload_path });
+var app       = express();
+
+// list aliases root directories
+// but it returns JSON responses for directories.
+app.get(config.url_base + "", fileStore.root(config));
+
+// provide a read access, much like serve-static,
+// but it returns JSON responses for directories.
+app.get(config.url_base + ":alias/*", fileStore.read(config));
+
+// provide write access, using multer to manage file uploads.
+app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
+
+// provide delete access, using multer to manage file uploads.
+app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
+
+// provides aliases management routes
+if (config.configurable_alias) {
+  // list alias object from the config
+  app.get(config.url_base + "aliases", fileStore.aliases.get(config));
+
+  // add an alias to the configuration
+  app.post(config.url_base + "aliases/add/",
+    bodyParser.urlencoded({extended: !true}), fileStore.aliases.add(config, configPath));
+
+  // remove an alias from the configuration
+  app.post(config.url_base + "aliases/remove/",
+    bodyParser.urlencoded({extended: !true}), fileStore.aliases.remove(config));
+}
+
+```
 
 # http api
 
