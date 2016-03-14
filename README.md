@@ -495,6 +495,7 @@ Returns the new list of aliases as a directory listing
 - ~~add range support for file streaming would be great.~~
 - multiple file uploads at once
 - change write method of the bin from POST to PUT
+- use POST to implement mkdir
 - provide built in client to consume the API
 - finish the tests about aliases management
 
