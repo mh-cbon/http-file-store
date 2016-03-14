@@ -57,7 +57,7 @@ function fsWrite (config) {
   var showAbsPath     = config.show_absolute_path;
   return function (req, res, next) {
 
-    var overwrite = allowOverwrite && !!req.query.overwrite;
+    var overwrite = !!allowOverwrite && !!req.query.overwrite;
 
     debug('req.file=%j allow_overwrite=%j', req.file, overwrite);
     if (!req.file) return res.status(500).json({
