@@ -98,15 +98,17 @@ app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
 The configuration is set via a `config.json` file defined from the command line invocation with `-c|--config` parameter.
 
 
-##### Setting the root
+##### Setting the root paths to serve
 
-To set the root path of the file system managed via the API, you can:
+To set the root path of the file system managed via the API, you can define those options:
 
 ##### Set base option
 
 `base: "/path/to/serve/"` will define a unique file system entry point to serve.
 
 Note: Internally it is transformed into an alias such `{alias:{"":"/path/"}}`
+
+Note2: `base` and `alias` directives are exclusive.
 
 ##### Define multiple alias
 
