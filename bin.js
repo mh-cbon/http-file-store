@@ -53,7 +53,7 @@ var pkg   = require('./package.json')
 var argv  = require('minimist')(process.argv.slice(2));
 var help  = require('@maboiteaspam/show-help')(usage, argv.h||argv.help, pkg)
 var debug = require('@maboiteaspam/set-verbosity')(pkg.name, argv.v || argv.verbose);
-var fs    = require('node-fs-extra')
+var fs    = require('fs-extra');
 var path  = require('path')
 
 var configPath  = argv.config || argv.c || false;
@@ -103,7 +103,7 @@ if (!config.clear) {
 Object.keys(config.aliases).forEach(function (alias){
   config.aliases[alias] = path.join(process.cwd(), config.aliases[alias])
   if (!fs.existsSync(config.aliases[alias])) {
-    fs.mkdirSync(config.aliases[alias], '0755', true)
+    fs.mkdirSync(config.aliases[alias], '0755')
   }
 })
 
