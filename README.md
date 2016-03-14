@@ -118,7 +118,7 @@ alias: {
 
 Doing so enable you to serve multiple root directories.
 
-To fetch the list of alias, you can query `/`.
+To fetch the list of aliases, you can query `/`.
 
 To fetch the content of an alias, you can query `/my_alias/` and so on.
 
