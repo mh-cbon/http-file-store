@@ -89,10 +89,6 @@ app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
 
 ```
 
-# http api
-
-`http-file-store` can manipulate files based on url path of the query.
-
 ### Configuration
 
 The configuration is set via a `config.json` file defined from the command line invocation with `-c|--config` parameter.
@@ -109,6 +105,10 @@ To set the root path of the file system managed via the API, you can define thos
 Note: Internally it is transformed into an alias such `{alias:{"":"/path/"}}`
 
 Note2: `base` and `alias` directives are exclusive.
+
+# http api
+
+`http-file-store` can manipulate files based on url path of the query.
 
 ##### Define multiple alias
 
