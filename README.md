@@ -1,6 +1,6 @@
 # http-file-store
 
-Server and api to read / write files over HTTP.
+Server and api to manipulates files over HTTP.
 
 # binary
 
@@ -77,6 +77,10 @@ var fileStore = require('http-file-store');
 var upload    = multer({ dest: config.upload_path });
 var app       = express();
 
+// list aliases root directories
+// but it returns JSON responses for directories.
+app.get(config.url_base + "", fileStore.root(config));
+
 // provide a read access, much like serve-static,
 // but it returns JSON responses for directories.
 app.get(config.url_base + ":alias/*", fileStore.read(config));
@@ -86,6 +90,20 @@ app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(co
 
 // provide delete access, using multer to manage file uploads.
 app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
+
+// provides aliases management routes
+if (config.configurable_alias) {
+  // list alias object from the config
+  app.get(config.url_base + "aliases", fileStore.aliases.get(config));
+
+  // add an alias to the configuration
+  app.post(config.url_base + "aliases/add/",
+    bodyParser.urlencoded({extended: !true}), fileStore.aliases.add(config, configPath));
+
+  // remove an alias from the configuration
+  app.post(config.url_base + "aliases/remove/",
+    bodyParser.urlencoded({extended: !true}), fileStore.aliases.remove(config));
+}
 
 ```
 
@@ -134,11 +152,11 @@ Add a property to the directory listing which provides the full path of the item
 
 ##### allow_overwrite: true
 
-Allow file overwrite capabilities.
+Enable file overwrite capabilities.
 
 ##### configurable_alias: true
 
-Enable a new routes to manage configuration aliases fro the API.
+Enable a new routes to manage configuration aliases from the API.
 
 ##### upload_path: "/path/to/save/tmp/uploaded/files"
 
@@ -147,6 +165,43 @@ Defines the path of the directory to write temporary uploaded files.
 ##### url_base: "/base/url/of/api/"
 
 Defines the base url from which the API is served. Must end with a `/`.
+
+### Pre defined routes without alias
+
+##### GET /
+
+Read root directory content and return it as a JSON object.
+
+##### GET /:path
+
+Read a path, if it is a directory, returns its content as a JSON object. If its a file, stream its content.
+
+##### POST /:path/file
+
+Write a file on given path. Use `overwrite=1` to overwrite existing files.
+
+##### DELETE /:path
+
+Unlink a file or a directory from the file system. Use `recursive=1` to recursively delete a directory.
+
+### Pre defined routes with aliases
+
+##### GET /
+
+Returns the list of `aliases` as a directory listing.
+
+##### GET /:alias/:path
+
+Read a `path` within given `alias`, if it is a directory, returns its content as a JSON object. If its a file, stream its content.
+
+##### POST /:alias/:path/file
+
+Write a file on given `path` within given `alias`. Use `overwrite=1` to overwrite existing files.
+
+##### DELETE /:alias/:path
+
+Unlink a `file` or a `directory` within given `alias`. Use `recursive=1` to recursively delete a directory.
+
 
 # http api
 
@@ -324,13 +379,32 @@ get / add / remove aliases.
 
 ##### Get
 
-Given a route mounted on `/aliases`, retrieve aliases object as a JSON response.
+Given a route mounted on `/aliases`, retrieve aliases object as of a directory listing
 
 ```js
 request(app)
   .get('/aliases/')
   .expect('Content-Type', /json/)
   .expect(200)
+```
+
+Response will be such
+
+```js
+[
+  {
+    name:   aliasName,
+    type:   'alias',
+    size:   0
+    mime:   'application/octet-stream',
+    atime:  0,
+    mtime:  0,
+    ctime:  0,
+    birthtime: 0,
+    // only if config.show_absolute_path is true
+    absolute_path: path.resolve(process.cwd(), config.aliases[alias])
+  }
+]
 ```
 
 ##### Add
@@ -356,6 +430,25 @@ request(app)
   .expect(200)
 ```
 
+Returns the new list of aliases as a directory listing
+
+```js
+[
+  {
+    name:   aliasName,
+    type:   'alias',
+    size:   0
+    mime:   'application/octet-stream',
+    atime:  0,
+    mtime:  0,
+    ctime:  0,
+    birthtime: 0,
+    // only if config.show_absolute_path is true
+    absolute_path: path.resolve(process.cwd(), config.aliases[alias])
+  }
+]
+```
+
 ##### Remove
 
 Given a route mounted on `/remove`, you may remove an `alias` of the current
@@ -375,6 +468,25 @@ request(app)
   .post('/remove/?persist=1')
   .field('alias', 'name')
   .expect(200)
+```
+
+Returns the new list of aliases as a directory listing
+
+```js
+[
+  {
+    name:   aliasName,
+    type:   'alias',
+    size:   0
+    mime:   'application/octet-stream',
+    atime:  0,
+    mtime:  0,
+    ctime:  0,
+    birthtime: 0,
+    // only if config.show_absolute_path is true
+    absolute_path: path.resolve(process.cwd(), config.aliases[alias])
+  }
+]
 ```
 
 # Todos

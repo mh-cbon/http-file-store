@@ -207,22 +207,7 @@ function fsDelete (config) {
 // alias manipulation
 function getRoot (config) {
   return function (req, res, next) {
-    var jsonRes = [];
-    Object.keys(config.aliases).forEach(function (alias) {
-      var item = {
-        name:   alias,
-        type:   'alias',
-        size:   0,
-        mime:   'application/octet-stream',
-        atime:  0,
-        mtime:  0,
-        ctime:  0,
-        birthtime: 0
-      };
-      if (config.show_absolute_path) item.absolute_path = null;
-      jsonRes.push(item)
-    })
-    return res.status(200).json(jsonRes)
+    return res.status(200).json(listAliasesAsDirectories(config))
   }
 }
 function aliasesGet (config) {
@@ -265,7 +250,7 @@ function aliasAdd (config, configPath) {
             message: err
           });
         }
-        res.status(200).json({});
+        res.status(200).json(listAliasesAsDirectories(config))
       })
 
     })
@@ -294,7 +279,7 @@ function aliasRemove (config) {
           message: err
         });
       }
-      res.status(200).json({});
+      res.status(200).json(listAliasesAsDirectories(config))
     })
 
   }
@@ -397,6 +382,29 @@ function removeTempFile(filePath, then){
   })
 }
 
+
+// alias utilities
+function listAliasesAsDirectories (config) {
+  var jsonRes = [];
+  Object.keys(config.aliases).forEach(function (alias) {
+    var item = {
+      name:   alias,
+      type:   'alias',
+      size:   0,
+      mime:   'application/octet-stream',
+      atime:  0,
+      mtime:  0,
+      ctime:  0,
+      birthtime: 0
+    };
+    if (config.show_absolute_path) item.absolute_path = path.resolve(process.cwd(), config.aliases[alias]);
+    jsonRes.push(item)
+  })
+  return jsonRes;
+}
+
+
+// exports
 module.exports = {
   aliases: {
     get:    aliasesGet,

@@ -177,11 +177,11 @@ if (config.aliases[""]) {
 }
 
 if (config.configurable_alias) {
-  app.get(config.url_base + "aliases", fileStore.aliases.getAliases(config));
+  app.get(config.url_base + "aliases", fileStore.aliases.get(config));
   app.post(config.url_base + "aliases/add/",
-    bodyParser.urlencoded({extended: !true}), fileStore.aliases.addAlias(config, configPath));
+    bodyParser.urlencoded({extended: !true}), fileStore.aliases.add(config, configPath));
   app.post(config.url_base + "aliases/remove/",
-    bodyParser.urlencoded({extended: !true}), fileStore.aliases.removeAlias(config));
+    bodyParser.urlencoded({extended: !true}), fileStore.aliases.remove(config));
 }
 
 if (config.ssl && config.ssl.key && config.ssl.cert) {
