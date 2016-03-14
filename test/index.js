@@ -4,7 +4,7 @@ var test      = painless.createGroup();
 var assert    = painless.assert;
 
 var path        = require('path')
-var fs          = require('node-fs-extra');
+var fs          = require('fs-extra');
 
 var request   = require('supertest');
 var express   = require('express');
@@ -136,7 +136,7 @@ var read      = fileStore.read('test/fixtures/');
     request(app)
       .delete('/delete/sub1/?recursive=1')
       .expect('Content-Type', /json/)
-      .expect(200, /^\[{"name":"some.txt","type":"file","size":7/)
+      .expect(200, /^\[{"name":"other.txt","type":"file","size":5/)
       .end(done);
   });
   test('can delete a file', function(done) {
@@ -294,7 +294,7 @@ var read      = fileStore.read('test/fixtures/');
     request(app)
       .delete('/delete/alias/sub1/?recursive=1')
       .expect('Content-Type', /json/)
-      .expect(200, /^\[{"name":"some.txt","type":"file","size":7/)
+      .expect(200, /^\[{"name":"other.txt","type":"file","size":5/)
       .end(done);
   });
   test('can delete a file', function(done) {
