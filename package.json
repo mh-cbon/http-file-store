@@ -1,7 +1,7 @@
 {
   "name": "@mh-cbon/http-file-store",
   "version": "1.0.0",
-  "description": "Server and api to read / write files over HTTP",
+  "description": "Server and api to manipulate a file system over http",
   "main": "index.js",
   "bin": {
     "http-file-store": "./bin.js"

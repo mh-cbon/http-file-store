@@ -5,7 +5,7 @@ Server and api to read / write files over HTTP.
 # binary
 
 `http-file-store` is a stand alone web server which provides
-an api to read / write a file system over HTTP.
+an api to manipulate a file system over HTTP.
 
 ### install
 ```
@@ -15,7 +15,7 @@ npm i -g mh-cbon/http-file-store
 ### usage
 ```
 http-file-store 1.0.0
-  Server and api to read / write files over http
+  Server and api to manipulate a file system over http
 
 Usage
 
@@ -67,7 +67,7 @@ Config
 # express handlers
 
 `http-file-store` can also be consumed as a module of your project.
-It provides two handlers to use with an express application.
+It provides multiple handlers to use with an express application.
 
 ### Example
 
@@ -84,11 +84,46 @@ app.get(config.url_base + ":alias/*", fileStore.read(config));
 // provide write access, using multer to manage file uploads.
 app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
 
+// provide delete access, using multer to manage file uploads.
+app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
+
 ```
 
 # http api
 
-`http-file-store` can read files based on url path.
+`http-file-store` can manipulate files based on url path of the query.
+
+### Configuration
+
+The configuration is set via a `config.json` file defined from the command line invocation with `-c|--config` parameter.
+
+
+##### Setting the root
+
+To set the root path of the file system managed via the API, you can:
+
+##### Set base option
+
+`base: "/path/to/serve/"` will define a unique file system entry point to serve.
+
+Note: Internally it is transformed into an alias such `{alias:{"":"/path/"}}`
+
+##### Define multiple alias
+
+Alternatively to the `base` directive, you can define an `alias` object of `path` to serve, such
+
+```json
+alias: {
+  "name": "path",
+  "name1": "path1",
+}
+```
+
+Doing so enable you to serve multiple root directories.
+
+To fetch the list of alias, you can query `/`.
+
+To fetch the content of an alias, you can query `/my_alias/` and so on.
 
 ### Read
 
@@ -194,10 +229,10 @@ request(app)
 
 You can enable a route to delete items by adding `allow_delete: true` to the configuration.
 
+##### A file
+
 Given a route mounted on `/delete`, and a file `some.txt` to delete
 on the root of an `empty` aliased directory (`{alias:{"":"/path/"}}`):
-
-##### A file
 
 ```js
 request(app)
@@ -227,9 +262,8 @@ directory, much like a read access:
 
 ##### A directory
 
-You can delete a directory too, by targeting it.
-
-If the directory is not empty, you shall send an extra query parameter
+You can delete a directory too, if the directory is not empty,
+you shall send an extra query parameter
 `recursive=1` to recursively delete a directory.
 
 ```js
