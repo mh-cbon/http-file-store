@@ -37,6 +37,7 @@ Config
     "upload_path": "/path/to/temp/uploaded/files",
     "show_absolute_path": true|false,
     "allow_overwrite": true|false,
+    "allow_delete": true|false,
     "configurable_alias": true|false,
     "aliases": {
       "alias_name": "/path/to/the/directory/to/read/write/files"
@@ -191,22 +192,70 @@ request(app)
 
 ### Delete
 
-__To be implemented.__
+You can enable a route to delete items by adding `allow_delete: true` to the configuration.
+
+Given a route mounted on `/delete`, and a file `some.txt` to delete
+on the root of an `empty` aliased directory (`{alias:{"":"/path/"}}`):
 
 ##### A file
 
 ```js
 request(app)
-  .post('/delete/some.txt')
+  .delete('/delete/some.txt')
   .expect(200)
+```
+
+On successful delete, the route handler will return the new listing of the
+directory, much like a read access:
+
+```js
+[
+  {
+    name:   f,
+    type:   stats.isFile() ? 'file' : 'dir',
+    size:   stats.size,
+    mime:   mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
+    atime:  stats.atime,
+    mtime:  stats.mtime,
+    ctime:  stats.ctime,
+    birthtime: stats.birthtime,
+    // only if config.show_absolute_path is true
+    absolute_path: path.resolve(path.join(filePath, f))
+  }
+]
 ```
 
 ##### A directory
 
+You can delete a directory too, by targeting it.
+
+If the directory is not empty, you shall send an extra query parameter
+`recursive=1` to recursively delete a directory.
+
 ```js
 request(app)
-  .post('/delete/other/?recursive=1')
+  .delete('/delete/other/?recursive=1')
   .expect(200)
+```
+
+On successful delete, the route handler will return the new listing of the
+directory, much like a read access:
+
+```js
+[
+  {
+    name:   f,
+    type:   stats.isFile() ? 'file' : 'dir',
+    size:   stats.size,
+    mime:   mime.lookup(path.join(filePath, f)) || 'application/octet-stream',
+    atime:  stats.atime,
+    mtime:  stats.mtime,
+    ctime:  stats.ctime,
+    birthtime: stats.birthtime,
+    // only if config.show_absolute_path is true
+    absolute_path: path.resolve(path.join(filePath, f))
+  }
+]
 ```
 
 ### Configure aliases
@@ -273,6 +322,9 @@ request(app)
 
 - ~~add range support for file streaming would be great.~~
 - multiple file uploads at once
+- change write method of the bin from POST to PUT
+- provide built in client to consume the API
+- finish the tests about aliases management
 
 # Read more
 

@@ -23,6 +23,7 @@ Config
     "show_absolute_path": true|false,
     "allow_overwrite": true|false,
     "configurable_alias": true|false,
+    "allow_delete": true|false,
     "aliases": {
       "url_name": "/path/to/the/directory/to/read/write/files"
     },
@@ -52,7 +53,7 @@ var pkg   = require('./package.json')
 var argv  = require('minimist')(process.argv.slice(2));
 var help  = require('@maboiteaspam/show-help')(usage, argv.h||argv.help, pkg)
 var debug = require('@maboiteaspam/set-verbosity')(pkg.name, argv.v || argv.verbose);
-var fs    = require('node-fs')
+var fs    = require('node-fs-extra')
 var path  = require('path')
 
 var configPath  = argv.config || argv.c || false;
@@ -163,17 +164,23 @@ config.cors && app.use(cors(config.cors));
 if (config.aliases[""]) {
   app.get(config.url_base + "*", fileStore.read(config));
   app.post(config.url_base + "*", upload.single('file'), fileStore.write(config));
+  if (config.allow_delete) {
+    app.delete(config.url_base + "*", fileStore.unlink(config));
+  }
 } else {
   app.get(config.url_base, fileStore.root(config));
   app.get(config.url_base + ":alias/*", fileStore.read(config));
   app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
+  if (config.allow_delete) {
+    app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
+  }
 }
 
 if (config.configurable_alias) {
   app.get(config.url_base + "aliases", fileStore.aliases.getAliases(config));
-  app.post(config.url_base + "add/",
+  app.post(config.url_base + "aliases/add/",
     bodyParser.urlencoded({extended: !true}), fileStore.aliases.addAlias(config, configPath));
-  app.post(config.url_base + "remove/",
+  app.post(config.url_base + "aliases/remove/",
     bodyParser.urlencoded({extended: !true}), fileStore.aliases.removeAlias(config));
 }
 

@@ -1,6 +1,6 @@
 
 var pkg       = require('./package.json')
-var fs        = require('node-fs');
+var fs        = require('node-fs-extra');
 var path      = require('path');
 var async     = require('async');
 var mime      = require('mime');
@@ -47,8 +47,8 @@ function fsRead (config) {
           })
           .pipe(res);
       }
-
     })
+
   }
 }
 
@@ -115,9 +115,92 @@ function fsWrite (config) {
 
 function fsDelete (config) {
   return function (req, res, next) {
-    res.status(500).send({
-      error : 'not implemented'
+    var filePath = reqFsPath(config, req);
+
+    debug('filepath=%s', filePath);
+
+    if(!filePath) return res.status(500).json({
+      error: 'File does not exist',
+      message: null
+    });
+
+    if(filePath.match(/[.]{1,2}\//)) return res.status(500).json({
+      error: 'Unexpected parameters value',
+      message: null
+    });
+
+    fs.lstat(filePath, function (err, stats) {
+
+      err && console.error(err);
+      if (err) return res.status(500).json({
+        error: 'File does not exist',
+        message: err
+      });
+
+      var show_absolute_path = config.show_absolute_path;
+
+      if (stats.isDirectory()) {
+
+        var isAnAlias = false
+        Object.keys(config.aliases).forEach(function isAnAlias(alias) {
+          var p = config.aliases[alias];
+          if (path.resolve(process.cwd(), p)===path.resolve(process.cwd(), filePath)) {
+            isAnAlias = true;
+          }
+        })
+
+        if (isAnAlias) return res.status(500).json({
+          error: 'Path must not be an aliased directory',
+          message: err
+        });
+
+        fs.rmdir(filePath, function (err) {
+          if (err) {
+            console.error(err);
+
+            var recursive = !!req.query.recursive;
+            if (!recursive) return res.status(500).json({
+              error: 'File can not be removed',
+              message: err
+            });
+
+            fs.remove(filePath, function (err) {
+              err && console.error(err);
+              if (err) return res.status(500).json({
+                error: 'File can not be removed',
+                message: err
+              });
+              readDirectory(path.resolve(filePath, '..'), show_absolute_path, function (err, jsonRes) {
+                if (err) return res.status(500).json(err);
+                res.status(200).json(jsonRes);
+              })
+            })
+          } else {
+            readDirectory(path.resolve(filePath, '..'), show_absolute_path, function (err, jsonRes) {
+              if (err) return res.status(500).json(err);
+              res.status(200).json(jsonRes);
+            })
+          }
+        });
+      }
+
+      if (stats.isFile()) {
+        fs.unlink(filePath, function (err) {
+          if (err) {
+            console.error(err);
+            return res.status(500).json({
+              error: 'File can not be removed',
+              message: err
+            });
+          }
+          readDirectory(path.resolve(filePath, '..'), show_absolute_path, function (err, jsonRes) {
+            if (err) return res.status(500).json(err);
+            res.status(200).json(jsonRes);
+          })
+        });
+      }
     })
+
   }
 }
 
@@ -232,7 +315,7 @@ function checkExists( filename, overwritable, then ) {
 }
 
 function createDirectory( directory, then ) {
-  fs.mkdir( directory, '0755', true, function( error ) {
+  fs.mkdirs( directory, '0755', true, function( error ) {
     var err;
     if ( error )
       err = {
@@ -322,5 +405,6 @@ module.exports = {
   },
   root:   getRoot,
   read:   fsRead,
-  write:  fsWrite
+  write:  fsWrite,
+  unlink: fsDelete
 }

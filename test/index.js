@@ -4,7 +4,7 @@ var test      = painless.createGroup();
 var assert    = painless.assert;
 
 var path        = require('path')
-var fs          = require('node-fs');
+var fs          = require('node-fs-extra');
 
 var request   = require('supertest');
 var express   = require('express');
@@ -18,8 +18,10 @@ var read      = fileStore.read('test/fixtures/');
 
   fs.mkdirSync(fixturePath, 0o777, true);
   fs.mkdirSync(path.join(fixturePath, 'sub'), 0o777, true);
+  fs.mkdirSync(path.join(fixturePath, 'sub1'), 0o777, true);
   fs.writeFileSync(path.join(fixturePath, "some.txt"), "content");
   fs.writeFileSync(path.join(fixturePath, "sub", "other.txt"), "empty");
+  fs.writeFileSync(path.join(fixturePath, "sub1", "other.txt"), "empty");
 
   var config = {
     aliases: {
@@ -45,6 +47,8 @@ var read      = fileStore.read('test/fixtures/');
   app.post('/no_overwrite/*',
     upload.single('file'),
     fileStore.write(config));
+  app.delete('/delete/*',
+    fileStore.unlink(config));
 
 
   test('read file on root', function(done) {
@@ -122,6 +126,39 @@ var read      = fileStore.read('test/fixtures/');
       .expect(500)
       .end(done);
   });
+  test('can not delete a non empty directory', function(done) {
+    request(app)
+      .delete('/delete/sub1/')
+      .expect(500)
+      .end(done);
+  });
+  test('can recursively delete a non empty directory', function(done) {
+    request(app)
+      .delete('/delete/sub1/?recursive=1')
+      .expect('Content-Type', /json/)
+      .expect(200, /^\[{"name":"some.txt","type":"file","size":7/)
+      .end(done);
+  });
+  test('can delete a file', function(done) {
+    request(app)
+      .delete('/delete/sub/other.txt')
+      .expect('Content-Type', /json/)
+      .expect(200, /^\[\]/)
+      .end(done);
+  });
+  test('can delete a directory', function(done) {
+    request(app)
+      .delete('/delete/sub/')
+      .expect('Content-Type', /json/)
+      .expect(200, /^\[{"name":"other.txt","type":"file","size":5/)
+      .end(done);
+  });
+  test('can not delete the root', function(done) {
+    request(app)
+      .delete('/delete/')
+      .expect(500)
+      .end(done);
+  });
 
 })();
 
@@ -131,8 +168,10 @@ var read      = fileStore.read('test/fixtures/');
 
   fs.mkdirSync(fixturePath, 0o777, true);
   fs.mkdirSync(path.join(fixturePath, 'sub'), 0o777, true);
+  fs.mkdirSync(path.join(fixturePath, 'sub1'), 0o777, true);
   fs.writeFileSync(path.join(fixturePath, "some.txt"), "content");
   fs.writeFileSync(path.join(fixturePath, "sub", "other.txt"), "empty");
+  fs.writeFileSync(path.join(fixturePath, "sub1", "other.txt"), "empty");
 
   var upload  = multer({ dest: path.join(fixturePath, 'uploads') });
   var app     = express();
@@ -158,6 +197,9 @@ var read      = fileStore.read('test/fixtures/');
   app.post('/no_overwrite/:alias/*',
     upload.single('file'),
     fileStore.write(config));
+  app.delete('/delete/:alias/*',
+    fileStore.unlink(config));
+  // @todo add tests about alias root / read / write
 
 
   test('read file on root', function(done) {
@@ -241,5 +283,38 @@ var read      = fileStore.read('test/fixtures/');
       .expect('Content-Type', /json/)
       .expect(500)
       .end(done)
+  });
+  test('can not delete a non empty directory', function(done) {
+    request(app)
+      .delete('/delete/alias/sub1/')
+      .expect(500)
+      .end(done);
+  });
+  test('can recursively delete a non empty directory', function(done) {
+    request(app)
+      .delete('/delete/alias/sub1/?recursive=1')
+      .expect('Content-Type', /json/)
+      .expect(200, /^\[{"name":"some.txt","type":"file","size":7/)
+      .end(done);
+  });
+  test('can delete a file', function(done) {
+    request(app)
+      .delete('/delete/alias/sub/other.txt')
+      .expect('Content-Type', /json/)
+      .expect(200, /^\[\]/)
+      .end(done);
+  });
+  test('can delete an empty directory', function(done) {
+    request(app)
+      .delete('/delete/alias/sub/')
+      .expect('Content-Type', /json/)
+      .expect(200, /^\[{"name":"other.txt","type":"file","size":5/)
+      .end(done);
+  });
+  test('can not delete the root', function(done) {
+    request(app)
+      .delete('/delete/alias/')
+      .expect(500)
+      .end(done);
   });
 })();
