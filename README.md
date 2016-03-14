@@ -106,10 +106,6 @@ Note: Internally it is transformed into an alias such `{alias:{"":"/path/"}}`
 
 Note2: `base` and `alias` directives are exclusive.
 
-# http api
-
-`http-file-store` can manipulate files based on url path of the query.
-
 ##### Define multiple alias
 
 Alternatively to the `base` directive, you can define an `alias` object of `path` to serve, such
@@ -126,6 +122,10 @@ Doing so enable you to serve multiple root directories.
 To fetch the list of alias, you can query `/`.
 
 To fetch the content of an alias, you can query `/my_alias/` and so on.
+
+# http api
+
+`http-file-store` can manipulate files based on url path of the query.
 
 ### Read
 
