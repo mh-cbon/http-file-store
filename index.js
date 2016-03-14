@@ -1,6 +1,6 @@
 
 var pkg       = require('./package.json')
-var fs        = require('node-fs-extra');
+var fs        = require('fs-extra');
 var path      = require('path');
 var async     = require('async');
 var mime      = require('mime');
@@ -300,7 +300,7 @@ function checkExists( filename, overwritable, then ) {
 }
 
 function createDirectory( directory, then ) {
-  fs.mkdirs( directory, '0755', true, function( error ) {
+  fs.mkdirs( directory, '0755', function( error ) {
     var err;
     if ( error )
       err = {
