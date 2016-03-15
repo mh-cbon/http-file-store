@@ -2,7 +2,7 @@ var url     = require('url');
 var path    = require('path');
 var Emitter = require('micro-events');
 
-EventEmitter.prototype.trigger = EventEmitter.prototype.emit;
+Emitter.prototype.trigger = Emitter.prototype.emit;
 
 function FSClient (opts) {
 
