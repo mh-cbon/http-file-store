@@ -57,13 +57,10 @@ function fsWrite (config) {
   var showAbsPath     = config.show_absolute_path;
   return function (req, res, next) {
 
-    var overwrite = !!allowOverwrite && !!req.query.overwrite;
+    if (!req.file) return next();
 
+    var overwrite = !!allowOverwrite && !!req.query.overwrite;
     debug('req.file=%j allow_overwrite=%j', req.file, overwrite);
-    if (!req.file) return res.status(500).json({
-      error: 'Missing "file" parameter',
-      message: null
-    });
 
     var fileInfo  = req.file;
     var filename  = fileInfo.originalname;
@@ -108,6 +105,43 @@ function fsWrite (config) {
           res.status(200).json(jsonRes);
         })
       });
+    });
+
+  }
+}
+
+function fsMkdir (config) {
+  var showAbsPath = config.show_absolute_path;
+  return function (req, res, next) {
+
+    var directory = reqFsPath(config, req);
+    var name = req.body.name;
+
+    debug('directory=%s', directory);
+    debug('name=%s', name);
+    if( !directory || !name ||
+        directory.match(/[.]{1,2}\//)  || // must not match any slash, dot is allowed.
+        name.match(/[.]{1,2}\//) )        // must not match any slash, dot is allowed.
+      return res.status(500).json({
+        error: 'Unexpected parameters value',
+        message: null
+      });
+
+    var newPath = path.join(directory, name);
+
+    async.series( [
+        // check if the file exists and if we can overwrite it if it does
+        checkExists.bind( null, newPath ),
+
+        // create the necessary directory structure
+        createDirectory.bind( null, newPath )
+
+    ], function( err ) {
+      if ( err ) return res.status(500).json(err);
+      readDirectory(directory, showAbsPath, function (err, jsonRes) {
+        if (err) return res.status(500).json(err);
+        res.status(200).json(jsonRes);
+      })
     });
 
   }
@@ -287,6 +321,10 @@ function aliasRemove (config) {
 
 // utilities
 function checkExists( filename, overwritable, then ) {
+  if(typeof(overwritable)==="function") {
+    then = overwritable;
+    overwritable = false;
+  }
   fs.exists( filename, function( exists ) {
     var err;
     if ( exists && !overwritable )
@@ -295,7 +333,7 @@ function checkExists( filename, overwritable, then ) {
         message: 'The file you are trying to upload already exists and cannot be overwritten.',
         code: 400
       };
-    then(err);
+    then && then(err);
   });
 }
 
@@ -344,6 +382,10 @@ function setNormalPermissions( filename, then ) {
 }
 
 function readDirectory( filePath, showAbsPath, then ) {
+  if(typeof(showAbsPath)==="function") {
+    then = showAbsPath;
+    showAbsPath = false;
+  }
   fs.readdir(filePath, function (err, files) {
     if (err) return then({
       error: 'error reading directory',
@@ -413,6 +455,7 @@ module.exports = {
   },
   root:   getRoot,
   read:   fsRead,
+  mkdir:  fsMkdir,
   write:  fsWrite,
   unlink: fsDelete
 }

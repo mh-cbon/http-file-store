@@ -43,10 +43,12 @@ var read      = fileStore.read('test/fixtures/');
   app.get('/read/*', fileStore.read(config));
   app.post('/write/*',
     upload.single('file'),
-    fileStore.write(configOverwrite));
+    fileStore.write(configOverwrite),
+    fileStore.mkdir(configOverwrite));
   app.post('/no_overwrite/*',
     upload.single('file'),
-    fileStore.write(config));
+    fileStore.write(config),
+    fileStore.mkdir(config));
   app.delete('/delete/*',
     fileStore.unlink(config));
 
@@ -105,6 +107,12 @@ var read      = fileStore.read('test/fixtures/');
       .expect(200)
       .end(done);
   });
+  test('create a directory on root directory', function(done) {
+    request(app)
+      .post('/write/')
+      .field('name', 'alias')
+      .end(done);
+  });
   test('does not overwrite a file', function(done) {
     request(app)
       .post('/write/')
@@ -136,7 +144,7 @@ var read      = fileStore.read('test/fixtures/');
     request(app)
       .delete('/delete/sub1/?recursive=1')
       .expect('Content-Type', /json/)
-      .expect(200, /^\[{"name":"other.txt","type":"file","size":5/)
+      .expect(200, /^\[{"name":"alias","type":"dir","size":4096/)
       .end(done);
   });
   test('can delete a file', function(done) {
@@ -150,7 +158,7 @@ var read      = fileStore.read('test/fixtures/');
     request(app)
       .delete('/delete/sub/')
       .expect('Content-Type', /json/)
-      .expect(200, /^\[{"name":"other.txt","type":"file","size":5/)
+      .expect(200, /^\[{"name":"alias","type":"dir","size":4096/)
       .end(done);
   });
   test('can not delete the root', function(done) {
@@ -193,10 +201,12 @@ var read      = fileStore.read('test/fixtures/');
   app.get('/read/:alias/*', fileStore.read(config));
   app.post('/write/:alias/*',
     upload.single('file'),
-    fileStore.write(configOverwrite));
+    fileStore.write(configOverwrite),
+    fileStore.mkdir(configOverwrite));
   app.post('/no_overwrite/:alias/*',
     upload.single('file'),
-    fileStore.write(config));
+    fileStore.write(config),
+    fileStore.mkdir(config));
   app.delete('/delete/:alias/*',
     fileStore.unlink(config));
   // @todo add tests about alias root / read / write
@@ -253,6 +263,13 @@ var read      = fileStore.read('test/fixtures/');
     request(app)
       .post('/write/alias/')
       .attach('file', path.join(fixturePath, 'sub', 'other.txt'))
+      .expect(200)
+      .end(done);
+  });
+  test('create a directory on root directory', function(done) {
+    request(app)
+      .post('/write/alias/')
+      .field('name', 'some')
       .expect(200)
       .end(done);
   });

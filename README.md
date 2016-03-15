@@ -135,11 +135,14 @@ Read root directory content and return it as a JSON object.
 
 Read a path, if it is a directory, returns its content as a JSON object. If its a file, stream its content. Use `download=1` to force file download.
 
-##### POST /:path/file
+##### POST /:store_path
 
-Write a file on given path. Use `overwrite=1` to overwrite existing files.
+Provide a field `file` to write a file onto the system.
+Use `overwrite=1` to overwrite an existing file.
 
-##### DELETE /:path
+Provide `name` to create a directory.
+
+##### DELETE /:path_to_delete
 
 Unlink a file or a directory from the file system. Use `recursive=1` to recursively delete a directory.
 
@@ -153,11 +156,14 @@ Returns the list of `aliases` as a directory listing.
 
 Read a `path` within given `alias`, if it is a directory, returns its content as a JSON object. If its a file, stream its content. Use `download=1` to force file download.
 
-##### POST /:alias/:path/file
+##### POST /:alias/:store_path
 
-Write a file on given `path` within given `alias`. Use `overwrite=1` to overwrite existing files.
+Provide a field `file` to write a file onto the system.
+Use `overwrite=1` to overwrite an existing file.
 
-##### DELETE /:alias/:path
+Provide `name` to create a directory.
+
+##### DELETE /:alias/:path_to_delete
 
 Unlink a `file` or a `directory` within given `alias`. Use `recursive=1` to recursively delete a directory.
 
@@ -498,6 +504,7 @@ Returns the new list of aliases as a directory listing
 - use POST to implement mkdir
 - provide built in client to consume the API
 - finish the tests about aliases management
+- make tests independent
 
 # Read more
 

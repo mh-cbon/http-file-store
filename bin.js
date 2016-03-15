@@ -163,14 +163,18 @@ config.cors && app.use(cors(config.cors));
 
 if (config.aliases[""]) {
   app.get(config.url_base + "*", fileStore.read(config));
-  app.post(config.url_base + "*", upload.single('file'), fileStore.write(config));
+  app.post(config.url_base + "*", upload.single('file'),
+  fileStore.write(config),
+  fileStore.mkdir(config));
   if (config.allow_delete) {
     app.delete(config.url_base + "*", fileStore.unlink(config));
   }
 } else {
   app.get(config.url_base, fileStore.root(config));
   app.get(config.url_base + ":alias/*", fileStore.read(config));
-  app.post(config.url_base + ":alias/*", upload.single('file'), fileStore.write(config));
+  app.post(config.url_base + ":alias/*", upload.single('file'),
+  fileStore.write(config),
+  fileStore.mkdir(config));
   if (config.allow_delete) {
     app.delete(config.url_base + ":alias/*", fileStore.unlink(config));
   }
