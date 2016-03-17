@@ -546,3 +546,8 @@ systemctl -l --user stop http-file-store.service
 systemctl -l --user status http-file-store.service
 systemctl -l --user enable http-file-store.service
 ```
+
+To check the logs, user
+```
+journalctl --user-unit=http-file-store
+```
