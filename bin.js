@@ -101,7 +101,8 @@ if (!config.clear) {
 }
 
 Object.keys(config.aliases).forEach(function (alias){
-  config.aliases[alias] = path.join(process.cwd(), config.aliases[alias])
+  if(!path.isAbsolute(config.aliases[alias])) 
+    config.aliases[alias] = path.join(process.cwd(), config.aliases[alias])
   if (!fs.existsSync(config.aliases[alias])) {
     fs.mkdirSync(config.aliases[alias], '0755')
   }
