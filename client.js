@@ -24,7 +24,10 @@ function FSClient (opts) {
   self.endPointUrl = function (relativeUrl, query) {
     return remoteUrl(relativeUrl || '', query)
   }
-  opts && self.setEndPoint(opts);
+  if (opts) {
+    if (typeof(opts)==='string') opts = url.parse(opts);
+    self.setEndPoint(opts);
+  }
 
   var remoteUrl = function (relativeUrl, query) {
     var o = {
