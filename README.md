@@ -538,3 +538,11 @@ WorkingDirectory=/some/path/wd
 [Install]
 WantedBy=multi-user.target
 ```
+
+Then use those commands to start / stop / status / enable the service
+```
+systemctl -l --user start http-file-store.service
+systemctl -l --user stop http-file-store.service
+systemctl -l --user status http-file-store.service
+systemctl -l --user enable http-file-store.service
+```
