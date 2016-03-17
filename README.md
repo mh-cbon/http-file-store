@@ -512,3 +512,29 @@ Returns the new list of aliases as a directory listing
 - http://expressjs.com/en/api.html
 - https://nodejs.org/api/https.html
 - https://github.com/expressjs/multer
+
+# Systemd
+
+To install it as a service on systemd,
+
+Edit a file under your home such
+```
+$ ll ~/.config/systemd/user/http-file-store.service
+-rw-r--r-- 1 some some 340 17 mars  16:17 /home/some/.config/systemd/user/http-file-store.service
+```
+
+Change its content to
+```
+[Unit]
+Description=Http file store
+
+[Service]
+ExecStart=/home/some/.nvm/versions/node/v5.0.0/bin/http-file-store -c /home/some/http-file-store.json
+Restart=always
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+WorkingDirectory=/some/path/wd
+
+[Install]
+WantedBy=multi-user.target
+```
