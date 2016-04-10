@@ -10,7 +10,14 @@
     "test": "rm -fr test/fixtures* && node test/*.js",
     "build": "npm run buildc && npm run buildz && ls -alh client.min.*",
     "buildc": "browserify client.js | uglifyjs > client.min.js",
-    "buildz": "gzip -c client.min.js > client.min.js.gz"
+    "buildz": "gzip -c client.min.js > client.min.js.gz",
+    "patch": "npm version patch -m \"patch %s\"",
+    "minor": "npm version minor -m \"minor %s\"",
+    "major": "npm version major -m \"major %s\"",
+    "preversion": "echo \"npm test: not defined\"",
+    "version": "echo \"npm run build: not defined\"",
+    "postversion": "git push && git push --tags && npm run public",
+    "public": "npm publish --access=public"
   },
   "repository": {
     "type": "git",
