@@ -1,6 +1,6 @@
 {
   "name": "@mh-cbon/http-file-store",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Server and api to manipulate a file system over http",
   "main": "index.js",
   "bin": {
