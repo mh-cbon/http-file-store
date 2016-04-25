@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Http-file-store by mh-cbon</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Http-file-store</h1>
+      <h2 class="project-tagline">HTTP server to store files</h2>
+      <a href="https://github.com/mh-cbon/http-file-store" class="btn">View on GitHub</a>
+      <a href="https://github.com/mh-cbon/http-file-store/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/mh-cbon/http-file-store/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="http-file-store" class="anchor" href="#http-file-store" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>http-file-store</h1>
+
+<p>Server and api to manipulates files over HTTP.</p>
+
+<h1>
+<a id="binary" class="anchor" href="#binary" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>binary</h1>
+
+<p><code>http-file-store</code> is a stand alone web server which provides
+an api to manipulate a file system over HTTP.</p>
+
+<h3>
+<a id="install" class="anchor" href="#install" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>install</h3>
+
+<pre><code>npm i -g mh-cbon/http-file-store
+</code></pre>
+
+<h3>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>usage</h3>
+
+<pre><code>http-file-store 1.0.0
+  Server and api to manipulate a file system over http
+
+Usage
+
+  http-file-store --config=/path/to/config.json
+
+Options
+
+  --config  | -c   Path to the JSON configuration file
+  --port    | -p   Port of the CLEAR http server, if no configuration is provided.
+  --verbose | -v   Enable verbosity pass in the module list to debug.
+
+Config
+
+  The configuration is a plain json object describing several options to
+  apply to your instance of http-file-store.
+
+  {
+    "url_base": "/base/url/to/serve/files/ending/with/a/slash",
+    "upload_path": "/path/to/temp/uploaded/files",
+    "show_absolute_path": true|false,
+    "allow_overwrite": true|false,
+    "allow_delete": true|false,
+    "configurable_alias": true|false,
+    "aliases": {
+      "alias_name": "/path/to/the/directory/to/read/write/files"
+    },
+    "ssl": {
+      "port": "a number, or null for a random port",
+      "host": "a host value to listen for https requests",
+      "key": "a path to an SSL key",
+      "ca": "a path to the SSL CA file",
+      "cert": "a path to the SSL cert file"
+    },
+    "clear": {
+      "port": "a number, or null for a random port",
+      "host": "a host value to listen for http requests"
+    },
+    "cors": {
+      "origin": "*",
+      "credentials": "true|false",
+      "methods": ['GET', 'PUT', 'POST'],
+      "allowedHeaders": ['Content-Type', 'Authorization'],
+      "exposedHeaders": ['Content-Range', 'X-Content-Range'],
+      "maxAge": 600
+    }
+  }
+</code></pre>
+
+<h1>
+<a id="bin" class="anchor" href="#bin" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>bin</h1>
+
+<h3>
+<a id="configuration" class="anchor" href="#configuration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Configuration</h3>
+
+<p>The configuration is set via a <code>config.json</code> file defined from the command line invocation with <code>-c|--config</code> parameter.</p>
+
+<h4>
+<a id="setting-the-root-paths-to-serve" class="anchor" href="#setting-the-root-paths-to-serve" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setting the root paths to serve</h4>
+
+<p>To set the root path of the file system managed via the API, you can define those options:</p>
+
+<h5>
+<a id="set-base-option" class="anchor" href="#set-base-option" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Set base option</h5>
+
+<p><code>base: "/path/to/serve/"</code> will define a unique file system entry point to serve.</p>
+
+<p>Note: Internally it is transformed into an alias such <code>{alias:{"":"/path/"}}</code></p>
+
+<p>Note2: <code>base</code> and <code>alias</code> directives are exclusive.</p>
+
+<h5>
+<a id="define-multiple-alias" class="anchor" href="#define-multiple-alias" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Define multiple alias</h5>
+
+<p>Alternatively to the <code>base</code> directive, you can define an <code>alias</code> object of <code>path</code> to serve, such</p>
+
+<div class="highlight highlight-source-json"><pre>alias: {
+  <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>path<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>name1<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>path1<span class="pl-pds">"</span></span>,
+}</pre></div>
+
+<p>Doing so enable you to serve multiple root directories.</p>
+
+<p>To fetch the list of aliases, you can query <code>/</code>.</p>
+
+<p>To fetch the content of an alias, you can query <code>/my_alias/</code> and so on.</p>
+
+<h4>
+<a id="other-noticeable-options" class="anchor" href="#other-noticeable-options" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Other noticeable options</h4>
+
+<h5>
+<a id="allow_delete-true" class="anchor" href="#allow_delete-true" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>allow_delete: true</h5>
+
+<p>Enable a new route to delete files and directories.</p>
+
+<h5>
+<a id="show_absolute_path-true" class="anchor" href="#show_absolute_path-true" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>show_absolute_path: true</h5>
+
+<p>Add a property to the directory listing which provides the full path of the item on the remote system.</p>
+
+<h5>
+<a id="allow_overwrite-true" class="anchor" href="#allow_overwrite-true" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>allow_overwrite: true</h5>
+
+<p>Enable file overwrite capabilities.</p>
+
+<h5>
+<a id="configurable_alias-true" class="anchor" href="#configurable_alias-true" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>configurable_alias: true</h5>
+
+<p>Enable a new routes to manage configuration aliases from the API.</p>
+
+<h5>
+<a id="upload_path-pathtosavetmpuploadedfiles" class="anchor" href="#upload_path-pathtosavetmpuploadedfiles" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>upload_path: "/path/to/save/tmp/uploaded/files"</h5>
+
+<p>Defines the path of the directory to write temporary uploaded files.</p>
+
+<h5>
+<a id="url_base-baseurlofapi" class="anchor" href="#url_base-baseurlofapi" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>url_base: "/base/url/of/api/"</h5>
+
+<p>Defines the base url from which the API is served. Must end with a <code>/</code>.</p>
+
+<h3>
+<a id="pre-defined-routes-without-alias" class="anchor" href="#pre-defined-routes-without-alias" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Pre defined routes without alias</h3>
+
+<h5>
+<a id="get-" class="anchor" href="#get-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>GET /</h5>
+
+<p>Read root directory content and return it as a JSON object.</p>
+
+<h5>
+<a id="get-path" class="anchor" href="#get-path" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>GET /:path</h5>
+
+<p>Read a path, if it is a directory, returns its content as a JSON object. If its a file, stream its content. Use <code>download=1</code> to force file download.</p>
+
+<h5>
+<a id="post-store_path" class="anchor" href="#post-store_path" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>POST /:store_path</h5>
+
+<p>Provide a field <code>file</code> to write a file onto the system.
+Use <code>overwrite=1</code> to overwrite an existing file.</p>
+
+<p>Provide <code>name</code> to create a directory.</p>
+
+<h5>
+<a id="delete-path_to_delete" class="anchor" href="#delete-path_to_delete" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>DELETE /:path_to_delete</h5>
+
+<p>Unlink a file or a directory from the file system. Use <code>recursive=1</code> to recursively delete a directory.</p>
+
+<h3>
+<a id="pre-defined-routes-with-aliases" class="anchor" href="#pre-defined-routes-with-aliases" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Pre defined routes with aliases</h3>
+
+<h5>
+<a id="get--1" class="anchor" href="#get--1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>GET /</h5>
+
+<p>Returns the list of <code>aliases</code> as a directory listing.</p>
+
+<h5>
+<a id="get-aliaspath" class="anchor" href="#get-aliaspath" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>GET /:alias/:path</h5>
+
+<p>Read a <code>path</code> within given <code>alias</code>, if it is a directory, returns its content as a JSON object. If its a file, stream its content. Use <code>download=1</code> to force file download.</p>
+
+<h5>
+<a id="post-aliasstore_path" class="anchor" href="#post-aliasstore_path" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>POST /:alias/:store_path</h5>
+
+<p>Provide a field <code>file</code> to write a file onto the system.
+Use <code>overwrite=1</code> to overwrite an existing file.</p>
+
+<p>Provide <code>name</code> to create a directory.</p>
+
+<h5>
+<a id="delete-aliaspath_to_delete" class="anchor" href="#delete-aliaspath_to_delete" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>DELETE /:alias/:path_to_delete</h5>
+
+<p>Unlink a <code>file</code> or a <code>directory</code> within given <code>alias</code>. Use <code>recursive=1</code> to recursively delete a directory.</p>
+
+<h1>
+<a id="express-handlers" class="anchor" href="#express-handlers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>express handlers</h1>
+
+<p><code>http-file-store</code> can also be consumed as a module of your project.
+It provides multiple handlers to use with an express application.</p>
+
+<h3>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example</h3>
+
+<div class="highlight highlight-source-js"><pre>
+<span class="pl-k">var</span> fileStore <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>http-file-store<span class="pl-pds">'</span></span>);
+<span class="pl-k">var</span> upload    <span class="pl-k">=</span> <span class="pl-en">multer</span>({ dest<span class="pl-k">:</span> <span class="pl-smi">config</span>.<span class="pl-smi">upload_path</span> });
+<span class="pl-k">var</span> app       <span class="pl-k">=</span> <span class="pl-en">express</span>();
+
+<span class="pl-c">// list aliases root directories</span>
+<span class="pl-c">// but it returns JSON responses for directories.</span>
+<span class="pl-smi">app</span>.<span class="pl-en">get</span>(<span class="pl-smi">config</span>.<span class="pl-smi">url_base</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">fileStore</span>.<span class="pl-en">root</span>(config));
+
+<span class="pl-c">// provide a read access, much like serve-static,</span>
+<span class="pl-c">// but it returns JSON responses for directories.</span>
+<span class="pl-smi">app</span>.<span class="pl-en">get</span>(<span class="pl-smi">config</span>.<span class="pl-smi">url_base</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>:alias/*<span class="pl-pds">"</span></span>, <span class="pl-smi">fileStore</span>.<span class="pl-en">read</span>(config));
+
+<span class="pl-c">// provide write access, using multer to manage file uploads.</span>
+<span class="pl-smi">app</span>.<span class="pl-en">post</span>(<span class="pl-smi">config</span>.<span class="pl-smi">url_base</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>:alias/*<span class="pl-pds">"</span></span>, <span class="pl-smi">upload</span>.<span class="pl-en">single</span>(<span class="pl-s"><span class="pl-pds">'</span>file<span class="pl-pds">'</span></span>), <span class="pl-smi">fileStore</span>.<span class="pl-c1">write</span>(config));
+
+<span class="pl-c">// provide delete access, using multer to manage file uploads.</span>
+<span class="pl-smi">app</span>.<span class="pl-en">delete</span>(<span class="pl-smi">config</span>.<span class="pl-smi">url_base</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>:alias/*<span class="pl-pds">"</span></span>, <span class="pl-smi">fileStore</span>.<span class="pl-en">unlink</span>(config));
+
+<span class="pl-c">// provides aliases management routes</span>
+<span class="pl-k">if</span> (<span class="pl-smi">config</span>.<span class="pl-smi">configurable_alias</span>) {
+  <span class="pl-c">// list alias object from the config</span>
+  <span class="pl-smi">app</span>.<span class="pl-en">get</span>(<span class="pl-smi">config</span>.<span class="pl-smi">url_base</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>aliases<span class="pl-pds">"</span></span>, <span class="pl-smi">fileStore</span>.<span class="pl-smi">aliases</span>.<span class="pl-en">get</span>(config));
+
+  <span class="pl-c">// add an alias to the configuration</span>
+  <span class="pl-smi">app</span>.<span class="pl-en">post</span>(<span class="pl-smi">config</span>.<span class="pl-smi">url_base</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>aliases/add/<span class="pl-pds">"</span></span>,
+    <span class="pl-smi">bodyParser</span>.<span class="pl-en">urlencoded</span>({extended<span class="pl-k">:</span> <span class="pl-k">!</span><span class="pl-c1">true</span>}), <span class="pl-smi">fileStore</span>.<span class="pl-smi">aliases</span>.<span class="pl-c1">add</span>(config, configPath));
+
+  <span class="pl-c">// remove an alias from the configuration</span>
+  <span class="pl-smi">app</span>.<span class="pl-en">post</span>(<span class="pl-smi">config</span>.<span class="pl-smi">url_base</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>aliases/remove/<span class="pl-pds">"</span></span>,
+    <span class="pl-smi">bodyParser</span>.<span class="pl-en">urlencoded</span>({extended<span class="pl-k">:</span> <span class="pl-k">!</span><span class="pl-c1">true</span>}), <span class="pl-smi">fileStore</span>.<span class="pl-smi">aliases</span>.<span class="pl-en">remove</span>(config));
+}
+</pre></div>
+
+<h1>
+<a id="http-api" class="anchor" href="#http-api" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>http api</h1>
+
+<p><code>http-file-store</code> can manipulate files based on url path of the query.</p>
+
+<h3>
+<a id="read" class="anchor" href="#read" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Read</h3>
+
+<h5>
+<a id="a-file" class="anchor" href="#a-file" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>A file</h5>
+
+<p>Given a route mounted on <code>/read</code>, and a file <code>some.txt</code>
+on the root of an <code>empty</code> aliased directory (<code>{alias:{"":"/path/"}}</code>):</p>
+
+<div class="highlight highlight-source-js"><pre> <span class="pl-en">request</span>(app)
+   .<span class="pl-en">get</span>(<span class="pl-s"><span class="pl-pds">'</span>/read/some.txt<span class="pl-pds">'</span></span>)
+   .<span class="pl-en">expect</span>(<span class="pl-s"><span class="pl-pds">'</span>Content-Type<span class="pl-pds">'</span></span>,<span class="pl-sr"> <span class="pl-pds">/</span>text<span class="pl-pds">/</span></span>)
+   .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>,<span class="pl-sr"> <span class="pl-pds">/</span>content<span class="pl-pds">/</span></span>)
+   .<span class="pl-en">end</span>(done)</pre></div>
+
+<p>When the target path provided within the url path is recognized as a <code>file</code>,
+the content is streamed to the client.</p>
+
+<p>You may force file download by sending an extra <strong>query</strong> parameter with the GET request,</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">get</span>(<span class="pl-s"><span class="pl-pds">'</span>/read/some.txt?download=1<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-s"><span class="pl-pds">'</span>Content-Disposition<span class="pl-pds">'</span></span>,<span class="pl-sr"> <span class="pl-pds">/</span>attachment<span class="pl-pds">/</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<h5>
+<a id="a-directory" class="anchor" href="#a-directory" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>A directory</h5>
+
+<p>When the target path provided within the url path is recognized as a <code>directory</code>,
+the listing of the directory is returned as a JSON object such:</p>
+
+<div class="highlight highlight-source-js"><pre>  [
+    {
+      name<span class="pl-k">:</span>   f,
+      type<span class="pl-k">:</span>   <span class="pl-smi">stats</span>.<span class="pl-en">isFile</span>() <span class="pl-k">?</span> <span class="pl-s"><span class="pl-pds">'</span>file<span class="pl-pds">'</span></span> <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>dir<span class="pl-pds">'</span></span>,
+      size<span class="pl-k">:</span>   <span class="pl-smi">stats</span>.<span class="pl-c1">size</span>,
+      mime<span class="pl-k">:</span>   <span class="pl-smi">mime</span>.<span class="pl-en">lookup</span>(<span class="pl-smi">path</span>.<span class="pl-c1">join</span>(filePath, f)) <span class="pl-k">||</span> <span class="pl-s"><span class="pl-pds">'</span>application/octet-stream<span class="pl-pds">'</span></span>,
+      atime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">atime</span>,
+      mtime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">mtime</span>,
+      ctime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">ctime</span>,
+      birthtime<span class="pl-k">:</span> <span class="pl-smi">stats</span>.<span class="pl-smi">birthtime</span>,
+      <span class="pl-c">// only when config.show_absolute_path is true</span>
+      absolute_path<span class="pl-k">:</span> <span class="pl-smi">path</span>.<span class="pl-en">resolve</span>(<span class="pl-smi">path</span>.<span class="pl-c1">join</span>(filePath, f))
+    }
+  ]</pre></div>
+
+<h3>
+<a id="write" class="anchor" href="#write" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Write</h3>
+
+<p>Given a route mounted on <code>/write</code>, and a file <code>other.txt</code> to write
+on the root of an <code>empty</code> aliased directory (<code>{alias:{"":"/path/"}}</code>):</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">post</span>(<span class="pl-s"><span class="pl-pds">'</span>/write/<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">attach</span>(<span class="pl-s"><span class="pl-pds">'</span>file<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>other.txt<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>On successful write, the route handler will return the new listing of the
+directory, much like a read access:</p>
+
+<div class="highlight highlight-source-js"><pre>[
+  {
+    name<span class="pl-k">:</span>   f,
+    type<span class="pl-k">:</span>   <span class="pl-smi">stats</span>.<span class="pl-en">isFile</span>() <span class="pl-k">?</span> <span class="pl-s"><span class="pl-pds">'</span>file<span class="pl-pds">'</span></span> <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>dir<span class="pl-pds">'</span></span>,
+    size<span class="pl-k">:</span>   <span class="pl-smi">stats</span>.<span class="pl-c1">size</span>,
+    mime<span class="pl-k">:</span>   <span class="pl-smi">mime</span>.<span class="pl-en">lookup</span>(<span class="pl-smi">path</span>.<span class="pl-c1">join</span>(filePath, f)) <span class="pl-k">||</span> <span class="pl-s"><span class="pl-pds">'</span>application/octet-stream<span class="pl-pds">'</span></span>,
+    atime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">atime</span>,
+    mtime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">mtime</span>,
+    ctime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">ctime</span>,
+    birthtime<span class="pl-k">:</span> <span class="pl-smi">stats</span>.<span class="pl-smi">birthtime</span>,
+    <span class="pl-c">// only if config.show_absolute_path is true</span>
+    absolute_path<span class="pl-k">:</span> <span class="pl-smi">path</span>.<span class="pl-en">resolve</span>(<span class="pl-smi">path</span>.<span class="pl-c1">join</span>(filePath, f))
+  }
+]</pre></div>
+
+<h5>
+<a id="overwriting" class="anchor" href="#overwriting" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overwriting</h5>
+
+<p>When <code>config.json</code> file is configured to allow overwrite,</p>
+
+<div class="highlight highlight-source-json"><pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>allow_overwrite<span class="pl-pds">"</span></span>: <span class="pl-c1">true</span>,
+}</pre></div>
+
+<p>You may overwrite a file by sending an extra <strong>query</strong> parameter with the POST request,</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">post</span>(<span class="pl-s"><span class="pl-pds">'</span>/write/?overwrite=1<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">attach</span>(<span class="pl-s"><span class="pl-pds">'</span>file<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>other.txt<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<h3>
+<a id="delete" class="anchor" href="#delete" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Delete</h3>
+
+<h5>
+<a id="a-file-1" class="anchor" href="#a-file-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>A file</h5>
+
+<p>Given a route mounted on <code>/delete</code>, and a file <code>some.txt</code> to delete
+on the root of an <code>empty</code> aliased directory (<code>{alias:{"":"/path/"}}</code>):</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">delete</span>(<span class="pl-s"><span class="pl-pds">'</span>/delete/some.txt<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>On successful delete, the route handler will return the new listing of the
+directory, much like a read access:</p>
+
+<div class="highlight highlight-source-js"><pre>[
+  {
+    name<span class="pl-k">:</span>   f,
+    type<span class="pl-k">:</span>   <span class="pl-smi">stats</span>.<span class="pl-en">isFile</span>() <span class="pl-k">?</span> <span class="pl-s"><span class="pl-pds">'</span>file<span class="pl-pds">'</span></span> <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>dir<span class="pl-pds">'</span></span>,
+    size<span class="pl-k">:</span>   <span class="pl-smi">stats</span>.<span class="pl-c1">size</span>,
+    mime<span class="pl-k">:</span>   <span class="pl-smi">mime</span>.<span class="pl-en">lookup</span>(<span class="pl-smi">path</span>.<span class="pl-c1">join</span>(filePath, f)) <span class="pl-k">||</span> <span class="pl-s"><span class="pl-pds">'</span>application/octet-stream<span class="pl-pds">'</span></span>,
+    atime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">atime</span>,
+    mtime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">mtime</span>,
+    ctime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">ctime</span>,
+    birthtime<span class="pl-k">:</span> <span class="pl-smi">stats</span>.<span class="pl-smi">birthtime</span>,
+    <span class="pl-c">// only if config.show_absolute_path is true</span>
+    absolute_path<span class="pl-k">:</span> <span class="pl-smi">path</span>.<span class="pl-en">resolve</span>(<span class="pl-smi">path</span>.<span class="pl-c1">join</span>(filePath, f))
+  }
+]</pre></div>
+
+<h5>
+<a id="a-directory-1" class="anchor" href="#a-directory-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>A directory</h5>
+
+<p>You can delete a directory too, if the directory is not empty,
+you shall send an extra query parameter
+<code>recursive=1</code> to recursively delete a directory.</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">delete</span>(<span class="pl-s"><span class="pl-pds">'</span>/delete/other/?recursive=1<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>On successful delete, the route handler will return the new listing of the
+directory, much like a read access:</p>
+
+<div class="highlight highlight-source-js"><pre>[
+  {
+    name<span class="pl-k">:</span>   f,
+    type<span class="pl-k">:</span>   <span class="pl-smi">stats</span>.<span class="pl-en">isFile</span>() <span class="pl-k">?</span> <span class="pl-s"><span class="pl-pds">'</span>file<span class="pl-pds">'</span></span> <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>dir<span class="pl-pds">'</span></span>,
+    size<span class="pl-k">:</span>   <span class="pl-smi">stats</span>.<span class="pl-c1">size</span>,
+    mime<span class="pl-k">:</span>   <span class="pl-smi">mime</span>.<span class="pl-en">lookup</span>(<span class="pl-smi">path</span>.<span class="pl-c1">join</span>(filePath, f)) <span class="pl-k">||</span> <span class="pl-s"><span class="pl-pds">'</span>application/octet-stream<span class="pl-pds">'</span></span>,
+    atime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">atime</span>,
+    mtime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">mtime</span>,
+    ctime<span class="pl-k">:</span>  <span class="pl-smi">stats</span>.<span class="pl-smi">ctime</span>,
+    birthtime<span class="pl-k">:</span> <span class="pl-smi">stats</span>.<span class="pl-smi">birthtime</span>,
+    <span class="pl-c">// only if config.show_absolute_path is true</span>
+    absolute_path<span class="pl-k">:</span> <span class="pl-smi">path</span>.<span class="pl-en">resolve</span>(<span class="pl-smi">path</span>.<span class="pl-c1">join</span>(filePath, f))
+  }
+]</pre></div>
+
+<h3>
+<a id="configure-aliases" class="anchor" href="#configure-aliases" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Configure aliases</h3>
+
+<p>When <code>config.configurable_alias</code> is true, the binary will add new routes to
+get / add / remove aliases.</p>
+
+<h5>
+<a id="read-1" class="anchor" href="#read-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Read</h5>
+
+<p>Given a route mounted on <code>/</code>, retrieve aliases object as of a directory listing</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">get</span>(<span class="pl-s"><span class="pl-pds">'</span>/<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-s"><span class="pl-pds">'</span>Content-Type<span class="pl-pds">'</span></span>,<span class="pl-sr"> <span class="pl-pds">/</span>json<span class="pl-pds">/</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>Response will be such</p>
+
+<div class="highlight highlight-source-js"><pre>[
+  {
+    name<span class="pl-k">:</span>   aliasName,
+    type<span class="pl-k">:</span>   <span class="pl-s"><span class="pl-pds">'</span>alias<span class="pl-pds">'</span></span>,
+    size<span class="pl-k">:</span>   <span class="pl-c1">0</span>
+    mime<span class="pl-k">:</span>   <span class="pl-s"><span class="pl-pds">'</span>application/octet-stream<span class="pl-pds">'</span></span>,
+    atime<span class="pl-k">:</span>  <span class="pl-c1">0</span>,
+    mtime<span class="pl-k">:</span>  <span class="pl-c1">0</span>,
+    ctime<span class="pl-k">:</span>  <span class="pl-c1">0</span>,
+    birthtime<span class="pl-k">:</span> <span class="pl-c1">0</span>,
+    <span class="pl-c">// only if config.show_absolute_path is true</span>
+    absolute_path<span class="pl-k">:</span> <span class="pl-smi">path</span>.<span class="pl-en">resolve</span>(<span class="pl-c1">process</span>.<span class="pl-en">cwd</span>(), <span class="pl-smi">config</span>.<span class="pl-smi">aliases</span>[alias])
+  }
+]</pre></div>
+
+<h5>
+<a id="get" class="anchor" href="#get" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Get</h5>
+
+<p>Given a route mounted on <code>/aliases</code>, retrieve aliases object</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">get</span>(<span class="pl-s"><span class="pl-pds">'</span>/aliases/<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-s"><span class="pl-pds">'</span>Content-Type<span class="pl-pds">'</span></span>,<span class="pl-sr"> <span class="pl-pds">/</span>json<span class="pl-pds">/</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>Response will be such</p>
+
+<div class="highlight highlight-source-js"><pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>/path/<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>name1<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>/path1/<span class="pl-pds">"</span></span>,
+}</pre></div>
+
+<h5>
+<a id="add" class="anchor" href="#add" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Add</h5>
+
+<p>Given a route mounted on <code>/add</code>, you may add a new <code>alias</code> to the current
+configuration by doing a POST request with an <code>alias</code> and a <code>path</code> fields.</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">post</span>(<span class="pl-s"><span class="pl-pds">'</span>/add/<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">field</span>(<span class="pl-s"><span class="pl-pds">'</span>alias<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>name<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">field</span>(<span class="pl-s"><span class="pl-pds">'</span>path<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>path of the alias<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>You may persist the new configuration by sending an extra <strong>query</strong> parameter with the POST request,</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">post</span>(<span class="pl-s"><span class="pl-pds">'</span>/add/?persist=1<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">field</span>(<span class="pl-s"><span class="pl-pds">'</span>alias<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>name<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">field</span>(<span class="pl-s"><span class="pl-pds">'</span>path<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>path of the alias<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>Returns the new list of aliases as a directory listing</p>
+
+<div class="highlight highlight-source-js"><pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>/path/<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>name1<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>/path1/<span class="pl-pds">"</span></span>,
+}</pre></div>
+
+<h5>
+<a id="remove" class="anchor" href="#remove" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Remove</h5>
+
+<p>Given a route mounted on <code>/remove</code>, you may remove an <code>alias</code> of the current
+configuration by doing a POST request with an <code>alias</code> fields.</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">post</span>(<span class="pl-s"><span class="pl-pds">'</span>/remove/<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">field</span>(<span class="pl-s"><span class="pl-pds">'</span>alias<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>name<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>You may persist the new configuration by sending an extra <strong>query</strong> parameter with the POST request,</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-en">request</span>(app)
+  .<span class="pl-en">post</span>(<span class="pl-s"><span class="pl-pds">'</span>/remove/?persist=1<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">field</span>(<span class="pl-s"><span class="pl-pds">'</span>alias<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>name<span class="pl-pds">'</span></span>)
+  .<span class="pl-en">expect</span>(<span class="pl-c1">200</span>)</pre></div>
+
+<p>Returns the new list of aliases as a directory listing</p>
+
+<div class="highlight highlight-source-js"><pre>{
+  <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>/path/<span class="pl-pds">"</span></span>,
+  <span class="pl-s"><span class="pl-pds">"</span>name1<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>/path1/<span class="pl-pds">"</span></span>,
+}</pre></div>
+
+<h1>
+<a id="todos" class="anchor" href="#todos" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Todos</h1>
+
+<ul>
+<li><del>add range support for file streaming would be great.</del></li>
+<li>multiple file uploads at once</li>
+<li>change write method of the bin from POST to PUT</li>
+<li>use POST to implement mkdir</li>
+<li>provide built in client to consume the API</li>
+<li>finish the tests about aliases management</li>
+<li>make tests independent</li>
+</ul>
+
+<h1>
+<a id="read-more" class="anchor" href="#read-more" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Read more</h1>
+
+<ul>
+<li><a href="https://github.com/andyburke/node-storehouse">https://github.com/andyburke/node-storehouse</a></li>
+<li><a href="http://expressjs.com/en/api.html">http://expressjs.com/en/api.html</a></li>
+<li><a href="https://nodejs.org/api/https.html">https://nodejs.org/api/https.html</a></li>
+<li><a href="https://github.com/expressjs/multer">https://github.com/expressjs/multer</a></li>
+</ul>
+
+<h1>
+<a id="systemd" class="anchor" href="#systemd" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Systemd</h1>
+
+<p>To install it as a service on systemd,</p>
+
+<p>Edit a file under your home such</p>
+
+<pre><code>$ ll ~/.config/systemd/user/http-file-store.service
+-rw-r--r-- 1 some some 340 17 mars  16:17 /home/some/.config/systemd/user/http-file-store.service
+</code></pre>
+
+<p>Change its content to</p>
+
+<pre><code>[Unit]
+Description=Http file store
+
+[Service]
+ExecStart=/home/some/.nvm/versions/node/v5.0.0/bin/http-file-store -c /home/some/http-file-store.json
+Restart=always
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+WorkingDirectory=/some/path/wd
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+
+<p>Then use those commands to start / stop / status / enable the service</p>
+
+<pre><code>systemctl -l --user start http-file-store.service
+systemctl -l --user stop http-file-store.service
+systemctl -l --user status http-file-store.service
+systemctl -l --user enable http-file-store.service
+</code></pre>
+
+<p>To check the logs, user</p>
+
+<pre><code>journalctl --user-unit=http-file-store
+</code></pre>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/mh-cbon/http-file-store">Http-file-store</a> is maintained by <a href="https://github.com/mh-cbon">mh-cbon</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
